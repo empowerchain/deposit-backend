@@ -7,15 +7,14 @@ import (
 	"encoding/json"
 	"encore.dev/beta/auth"
 	"encore.dev/beta/errs"
-	"fmt"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 )
 
 const clientName = "empower-deposit-app"
 
 type AuthData struct {
-	Payload   AuthPayload `json:"payload"`
-	Signature string      `json:"signature"`
+	Payload   string `json:"payload"`
+	Signature string `json:"signature"`
 }
 
 type AuthPayload struct {
@@ -35,13 +34,19 @@ func AuthHandler(_ context.Context, token string) (auth.UID, error) {
 		return "", errs.WrapCode(err, errs.Unauthenticated, "")
 	}
 
-	if authData.Payload.Client != clientName {
+	payloadb, err := base64.StdEncoding.DecodeString(authData.Payload)
+	var authPayload AuthPayload
+	if err := json.Unmarshal(payloadb, &authPayload); err != nil {
+		return "", errs.WrapCode(err, errs.Unauthenticated, "")
+	}
+
+	if authPayload.Client != clientName {
 		return "", &errs.Error{
 			Code: errs.Unauthenticated,
 		}
 	}
 
-	pk, err := hex.DecodeString(authData.Payload.PubKey)
+	pk, err := hex.DecodeString(authPayload.PubKey)
 	if err != nil {
 		return "", errs.WrapCode(err, errs.Unauthenticated, "")
 	}
@@ -52,12 +57,11 @@ func AuthHandler(_ context.Context, token string) (auth.UID, error) {
 		return "", errs.WrapCode(err, errs.Unauthenticated, "")
 	}
 
-	payload := fmt.Sprintf(`{"pubKey":"%s","client":"%s","timestamp":%d}`, authData.Payload.PubKey, authData.Payload.Client, authData.Payload.Timestamp)
-	if ok := pubKey.VerifySignature([]byte(payload), sig); !ok {
+	if ok := pubKey.VerifySignature([]byte(authData.Payload), sig); !ok {
 		return "", &errs.Error{
 			Code: errs.Unauthenticated,
 		}
 	}
 
-	return auth.UID(authData.Payload.PubKey), nil
+	return auth.UID(authPayload.PubKey), nil
 }

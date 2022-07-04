@@ -44,13 +44,18 @@ func TestAuthHandler(t *testing.T) {
 	for _, test := range tests {
 		pubKeyHex := hex.EncodeToString(test.pubKey.Bytes())
 
-		payload := fmt.Sprintf(`{"pubKey":"%s","client":"%s","timestamp":%d}`, pubKeyHex, test.client, time.Now().Unix())
+		payloadStr := fmt.Sprintf(`{
+  "pubKey": "%s",
+  "client":"%s",
+  "timestamp":%d
+}`, pubKeyHex, test.client, time.Now().Unix())
+		payload := base64.StdEncoding.EncodeToString([]byte(payloadStr))
 
 		payloadSignatureB, err := test.signerPrivKey.Sign([]byte(payload))
 		require.NoError(t, err)
 
 		authData := fmt.Sprintf(`{
-  "payload": %s,
+  "payload": "%s",
   "signature": "%s"
 }`, payload, hex.EncodeToString(payloadSignatureB))
 
