@@ -55,6 +55,7 @@ func TestAuthHandler(t *testing.T) {
 }`, payload, hex.EncodeToString(payloadSignatureB))
 
 		authDataB64 := base64.StdEncoding.EncodeToString([]byte(authData))
+		fmt.Println(authDataB64)
 		uid, err := AuthHandler(context.Background(), authDataB64)
 
 		if test.errorCode == errs.OK {
