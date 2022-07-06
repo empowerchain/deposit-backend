@@ -1,4 +1,4 @@
-package scheme
+package deposit
 
 import (
 	"context"
@@ -39,7 +39,7 @@ func TestCreateScheme(t *testing.T) {
 	}
 
 	for _, test := range testTable {
-		require.NoError(t, testutils.ClearDb())
+		require.NoError(t, testutils.ClearDb("scheme"))
 
 		var ctx context.Context
 		if test.authenticated {
@@ -47,7 +47,7 @@ func TestCreateScheme(t *testing.T) {
 		} else {
 			ctx = context.Background()
 		}
-		resp, err := Create(ctx, &test.params)
+		resp, err := CreateScheme(ctx, &test.params)
 		if test.errorCode == errs.OK {
 			require.NoError(t, err)
 			require.NotEqual(t, "", resp.ID)

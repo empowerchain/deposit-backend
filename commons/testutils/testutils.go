@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encore.dev/beta/auth"
 	"encore.dev/storage/sqldb"
+	"fmt"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 )
 
@@ -15,7 +16,7 @@ func GetAuthenticatedContext() context.Context {
 	return auth.WithContext(context.Background(), auth.UID(pubKeyHex), nil)
 }
 
-func ClearDb() error {
-	_, err := sqldb.Exec(context.Background(), "TRUNCATE scheme")
+func ClearDb(db string) error {
+	_, err := sqldb.Exec(context.Background(), fmt.Sprintf("DELETE FROM %s", db))
 	return err
 }
