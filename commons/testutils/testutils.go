@@ -11,9 +11,18 @@ import (
 
 var defaultSigner = secp256k1.GenPrivKey()
 
-func GetAuthenticatedContext() context.Context {
-	pubKeyHex := hex.EncodeToString(defaultSigner.PubKey().Bytes())
-	return auth.WithContext(context.Background(), auth.UID(pubKeyHex), nil)
+func GetAuthenticatedContext(uid string) context.Context {
+	if uid == "" {
+		uid = hex.EncodeToString(defaultSigner.PubKey().Bytes())
+	}
+
+	return auth.WithContext(context.Background(), auth.UID(uid), nil)
+}
+
+func GenerateKeys() (publicKey string, privateKey *secp256k1.PrivKey) {
+	privateKey = secp256k1.GenPrivKey()
+	publicKey = hex.EncodeToString(privateKey.PubKey().Bytes())
+	return
 }
 
 func ClearDb(db string) error {

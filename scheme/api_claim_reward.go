@@ -1,4 +1,4 @@
-package deposit
+package scheme
 
 import (
 	"context"
@@ -9,6 +9,6 @@ type ClaimRequest struct {
 }
 
 //encore:api auth method=POST
-func Claim(ctx context.Context, params *ClaimRequest) error {
+func ClaimReward(ctx context.Context, params *ClaimRequest) error {
 	return nil
 }
