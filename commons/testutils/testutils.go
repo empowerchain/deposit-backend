@@ -16,6 +16,8 @@ const (
 var (
 	voucherDB = sqldb.Named("voucher")
 	orgDB     = sqldb.Named("organization")
+	depositDB = sqldb.Named("deposit")
+	schemeDB  = sqldb.Named("scheme")
 )
 
 var defaultSigner = secp256k1.GenPrivKey()
@@ -39,6 +41,12 @@ func ClearAllDBs() {
 		panic(err)
 	}
 	if err := ClearDB(orgDB, "organization"); err != nil {
+		panic(err)
+	}
+	if err := ClearDB(depositDB, "deposit"); err != nil {
+		panic(err)
+	}
+	if err := ClearDB(schemeDB, "scheme"); err != nil {
 		panic(err)
 	}
 }
