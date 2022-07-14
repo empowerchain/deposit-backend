@@ -90,7 +90,7 @@ func TestCreateVoucherDefinition(t *testing.T) {
 
 	for _, test := range testTable {
 		t.Run(test.name, func(t *testing.T) {
-			require.NoError(t, testutils.ClearDB(voucherDB, "voucher", "voucher_definition"))
+			require.NoError(t, testutils.ClearDB(voucherDB, "voucher_definition"))
 
 			var ctx context.Context
 			if test.uid != "" {
@@ -157,9 +157,9 @@ func TestGetAllVoucherDefinitions(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, numberOfVoucherDefs, len(allVoucherDefinitions.VoucherDefinitions))
 
-	for _, org := range allVoucherDefinitions.VoucherDefinitions {
-		require.Equal(t, voucherName, org.Name)
-		require.Equal(t, pictureURL, org.PictureURL)
-		require.NotEqual(t, "", org.ID)
+	for _, voucherDefinition := range allVoucherDefinitions.VoucherDefinitions {
+		require.Equal(t, voucherName, voucherDefinition.Name)
+		require.Equal(t, pictureURL, voucherDefinition.PictureURL)
+		require.NotEqual(t, "", voucherDefinition.ID)
 	}
 }

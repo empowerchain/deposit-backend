@@ -48,11 +48,15 @@ func CreateVoucherDefinition(ctx context.Context, params *CreateVoucherDefinitio
 }
 
 type GetVoucherDefinitionParams struct {
-	VoucherDefinitionID string
+	VoucherDefinitionID string `json:"voucherDefinitionID" validate:"required"`
 }
 
 //encore:api auth method=POST
 func GetVoucherDefinition(ctx context.Context, params *GetVoucherDefinitionParams) (*Definition, error) {
+	if err := commons.Validate(params); err != nil {
+		return nil, err
+	}
+
 	var vd Definition
 	if err := sqldb.QueryRow(ctx, "SELECT id, organization_id, name, picture_url FROM voucher_definition WHERE id=$1", params.VoucherDefinitionID).Scan(&vd.ID, &vd.OrganizationID, &vd.Name, &vd.PictureURL); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

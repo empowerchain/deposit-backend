@@ -62,6 +62,10 @@ type GetSchemeParams struct {
 
 //encore:api auth method=POST
 func GetScheme(ctx context.Context, params *GetSchemeParams) (*Scheme, error) {
+	if err := commons.Validate(params); err != nil {
+		return nil, err
+	}
+
 	var s Scheme
 	var rewardDefinitionsJson string
 	if err := sqldb.QueryRow(ctx, "SELECT * FROM scheme WHERE id=$1", params.SchemeID).Scan(&s.ID, &s.OrganizationID, &s.Name, &s.CollectionPoints, &rewardDefinitionsJson, &s.CreatedAt); err != nil {
@@ -107,14 +111,22 @@ func GetAllSchemes(_ context.Context) (resp *GetAllSchemesResponse, err error) {
 }
 
 type AddCollectionPointParams struct {
-	SchemeID              string
-	CollectionPointPubKey string
+	SchemeID              string `json:"schemeID" validate:"required"`
+	CollectionPointPubKey string `json:"collectionPointPubKey" validate:"required"`
 }
 
 //encore:api auth method=POST
 func AddCollectionPoint(ctx context.Context, params *AddCollectionPointParams) error {
+	if err := commons.Validate(params); err != nil {
+		return err
+	}
+
 	s, err := GetScheme(ctx, &GetSchemeParams{params.SchemeID})
 	if err != nil {
+		return err
+	}
+
+	if err := organization.AuthorizeCallerForOrg(ctx, &organization.AuthorizeCallerForOrgParams{OrganizationID: s.OrganizationID}); err != nil {
 		return err
 	}
 

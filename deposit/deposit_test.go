@@ -59,7 +59,7 @@ func TestMakeDeposit(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(""), &scheme.AddCollectionPointParams{
+	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(organizationPubKey), &scheme.AddCollectionPointParams{
 		SchemeID:              testScheme.ID,
 		CollectionPointPubKey: collectionPointPubKey,
 	})

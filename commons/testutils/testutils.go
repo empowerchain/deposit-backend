@@ -37,7 +37,7 @@ func GenerateKeys() (publicKey string, privateKey *secp256k1.PrivKey) {
 }
 
 func ClearAllDBs() {
-	if err := ClearDB(voucherDB, "voucher_definition", "voucher"); err != nil {
+	if err := ClearDB(voucherDB, "voucher", "voucher_definition"); err != nil {
 		panic(err)
 	}
 	if err := ClearDB(orgDB, "organization"); err != nil {

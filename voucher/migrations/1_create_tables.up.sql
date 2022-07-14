@@ -12,6 +12,7 @@ CREATE TABLE voucher
     id                    TEXT PRIMARY KEY,
     voucher_definition_id TEXT      NOT NULL,
     owner_pub_key         TEXT,
+    invalidated           BOOL      NOT NULL,
     created_at            TIMESTAMP NOT NULL DEFAULT now(),
     CONSTRAINT fk_voucher_definition FOREIGN KEY (voucher_definition_id) REFERENCES voucher_definition (id)
 )

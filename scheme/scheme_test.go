@@ -112,10 +112,10 @@ func TestCreateScheme(t *testing.T) {
 
 	for _, test := range testTable {
 		t.Run(test.name, func(t *testing.T) {
-			var ctx context.Context
-			if test.uid != "" {
-				ctx = testutils.GetAuthenticatedContext(test.uid)
-			} else {
+			require.NoError(t, testutils.ClearDB(schemeDB, "scheme"))
+
+			ctx := testutils.GetAuthenticatedContext(test.uid)
+			if test.uid == "" {
 				ctx = context.Background()
 			}
 			resp, err := CreateScheme(ctx, &test.params)
@@ -142,8 +142,101 @@ func TestCreateScheme(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, 0, len(getAllResp.Schemes))
 			}
+		})
+	}
+}
 
+func TestAddCollectionPoint(t *testing.T) {
+	testutils.ClearAllDBs()
+	require.NoError(t, admin.InsertTestData(context.Background()))
+
+	organizationPubKey, _ := testutils.GenerateKeys()
+	notOrganizationPubKey, _ := testutils.GenerateKeys()
+	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
+		ID:     testOrganizationId,
+		Name:   testOrganizationId,
+		PubKey: organizationPubKey,
+	})
+	require.NoError(t, err)
+
+	testTable := []struct {
+		name        string
+		useSchemeID bool
+		errorCode   errs.ErrCode
+		uid         string
+	}{
+		{
+			name:        "Happy Path",
+			useSchemeID: true,
+			errorCode:   errs.OK,
+			uid:         organizationPubKey,
+		},
+		{
+			name:        "Unauthenticated",
+			useSchemeID: true,
+			errorCode:   errs.Unauthenticated,
+			uid:         "",
+		},
+		{
+			name:        "Unauthorized",
+			useSchemeID: true,
+			errorCode:   errs.PermissionDenied,
+			uid:         notOrganizationPubKey,
+		},
+		{
+			name:        "Admin",
+			useSchemeID: true,
+			errorCode:   errs.OK,
+			uid:         testutils.AdminPubKey,
+		},
+		{
+			name:        "Not found",
+			useSchemeID: false,
+			errorCode:   errs.NotFound,
+			uid:         organizationPubKey,
+		},
+	}
+
+	for _, test := range testTable {
+		t.Run(test.name, func(t *testing.T) {
 			require.NoError(t, testutils.ClearDB(schemeDB, "scheme"))
+
+			scheme, err := CreateScheme(testutils.GetAuthenticatedContext(organizationPubKey), &CreateSchemeParams{
+				Name:              "SchemeName",
+				OrganizationID:    testOrganizationId,
+				RewardDefinitions: defaultTestRewards,
+			})
+			require.NoError(t, err)
+
+			ctx := testutils.GetAuthenticatedContext(test.uid)
+			if test.uid == "" {
+				ctx = context.Background()
+			}
+
+			schemeID := scheme.ID
+			if !test.useSchemeID {
+				schemeID = "something else"
+			}
+			collectionPointsPubKey, _ := testutils.GenerateKeys()
+			err = AddCollectionPoint(ctx, &AddCollectionPointParams{
+				SchemeID:              schemeID,
+				CollectionPointPubKey: collectionPointsPubKey,
+			})
+			if test.errorCode == errs.OK {
+				require.NoError(t, err)
+
+				dbScheme, err := GetScheme(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetSchemeParams{SchemeID: scheme.ID})
+				require.NoError(t, err)
+				require.Equal(t, 1, len(dbScheme.CollectionPoints))
+				require.Equal(t, collectionPointsPubKey, dbScheme.CollectionPoints[0])
+			} else {
+				require.Error(t, err)
+				require.Equal(t, test.errorCode, err.(*errs.Error).Code)
+
+				dbScheme, err := GetScheme(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetSchemeParams{SchemeID: scheme.ID})
+				require.NoError(t, err)
+				require.Equal(t, 0, len(dbScheme.CollectionPoints))
+			}
 		})
 	}
 }
