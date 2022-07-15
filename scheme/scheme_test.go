@@ -22,8 +22,9 @@ var (
 				MaterialDefinition: map[string]string{"materialType": "PET"},
 				Magnitude:          commons.Weight,
 			},
-			RewardType:    commons.Token,
-			RewardPerUnit: 1,
+			RewardType:   commons.Token,
+			RewardTypeID: "whatever",
+			PerItem:      1,
 		},
 	}
 )

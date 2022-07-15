@@ -30,15 +30,15 @@ func TestGetAllVouchers(t *testing.T) {
 		PictureURL:     "https://whatever.com/pic.jpeg",
 	})
 
+	tx, err := depositDB.Begin(context.Background())
+	require.NoError(t, err)
 	for i := 0; i < numberOfVouchers; i++ {
 		pubKey, _ := testutils.GenerateKeys()
 
-		_, err := MintVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &MintVoucherParams{
-			VoucherDefinitionID: voucherDefinition.ID,
-			PubKey:              pubKey,
-		})
+		_, err := mintVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), tx, voucherDefinition, pubKey)
 		require.NoError(t, err)
 	}
+	require.NoError(t, tx.Commit())
 
 	allVouchers, err := GetAllVouchers(testutils.GetAuthenticatedContext(testutils.AdminPubKey))
 	require.NoError(t, err)
@@ -74,21 +74,18 @@ func TestGetAllVouchersForUser(t *testing.T) {
 		PictureURL:     "https://whatever.com/pic.jpeg",
 	})
 
+	tx, err := depositDB.Begin(context.Background())
+	require.NoError(t, err)
 	for i := 0; i < numberOfVouchersForUser; i++ {
-		_, err := MintVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &MintVoucherParams{
-			VoucherDefinitionID: voucherDefinition.ID,
-			PubKey:              userPubKey,
-		})
+		_, err := mintVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), tx, voucherDefinition, userPubKey)
 		require.NoError(t, err)
 	}
 
 	for i := 0; i < numberOfVouchersForOtherUser; i++ {
-		_, err := MintVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &MintVoucherParams{
-			VoucherDefinitionID: voucherDefinition.ID,
-			PubKey:              otherUserPubKey,
-		})
+		_, err := mintVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), tx, voucherDefinition, otherUserPubKey)
 		require.NoError(t, err)
 	}
+	require.NoError(t, tx.Commit())
 
 	allVouchers, err := GetAllVouchers(testutils.GetAuthenticatedContext(testutils.AdminPubKey))
 	require.NoError(t, err)
@@ -166,18 +163,18 @@ func TestInvalidateVoucher(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			require.NoError(t, testutils.ClearDB(depositDB, "voucher"))
 
-			voucher, err := MintVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &MintVoucherParams{
-				VoucherDefinitionID: voucherDefinition.ID,
-				PubKey:              ownerPubKey,
-			})
+			tx, err := depositDB.Begin(context.Background())
 			require.NoError(t, err)
+			mintedVoucherId, err := mintVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), tx, voucherDefinition, ownerPubKey)
+			require.NoError(t, err)
+			require.NoError(t, tx.Commit())
 
 			ctx := testutils.GetAuthenticatedContext(test.uid)
 			if test.uid == "" {
 				ctx = context.Background()
 			}
 
-			voucherID := voucher.ID
+			voucherID := mintedVoucherId
 			if !test.useRealVoucherID {
 				voucherID = "does not exist"
 			}
@@ -187,14 +184,14 @@ func TestInvalidateVoucher(t *testing.T) {
 			if test.errorCode == errs.OK {
 				require.NoError(t, err)
 
-				dbVoucher, err := GetVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetVoucherParams{VoucherID: voucher.ID})
+				dbVoucher, err := GetVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetVoucherParams{VoucherID: mintedVoucherId})
 				require.NoError(t, err)
 				require.True(t, dbVoucher.Invalidated)
 			} else {
 				require.Error(t, err)
 				require.Equal(t, test.errorCode, err.(*errs.Error).Code)
 
-				dbVoucher, err := GetVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetVoucherParams{VoucherID: voucher.ID})
+				dbVoucher, err := GetVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetVoucherParams{VoucherID: mintedVoucherId})
 				require.NoError(t, err)
 				require.False(t, dbVoucher.Invalidated)
 			}

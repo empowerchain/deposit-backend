@@ -16,6 +16,7 @@ type ClaimParams struct {
 }
 
 type ClaimResponse struct {
+	Rewards []commons.Reward
 }
 
 //encore:api auth method=POST
@@ -48,7 +49,9 @@ func Claim(ctx context.Context, params *ClaimParams) (*ClaimResponse, error) {
 		return nil, err
 	}
 
-	if err := payOutRewards(ctx, tx, deposit); err != nil {
+	deposit.UserPubKey = params.UserPubKey
+	rewards, err := payOutRewards(ctx, tx, deposit)
+	if err != nil {
 		return nil, err
 	}
 
@@ -56,7 +59,9 @@ func Claim(ctx context.Context, params *ClaimParams) (*ClaimResponse, error) {
 		return nil, err
 	}
 
-	return &ClaimResponse{}, nil
+	return &ClaimResponse{
+		Rewards: rewards,
+	}, nil
 }
 
 func authorizeCallerToClaim(ctx context.Context, userPubKey string, deposit *Deposit) error {
@@ -84,11 +89,11 @@ func authorizeCallerToClaim(ctx context.Context, userPubKey string, deposit *Dep
 	}
 }
 
-func payOutRewards(ctx context.Context, tx *sqldb.Tx, deposit *Deposit) error {
+func payOutRewards(ctx context.Context, tx *sqldb.Tx, deposit *Deposit) ([]commons.Reward, error) {
 	var rewards []commons.Reward
 	s, err := scheme.GetScheme(ctx, &scheme.GetSchemeParams{SchemeID: deposit.SchemeID})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	for _, rd := range s.RewardDefinitions {
 		for _, depItem := range deposit.MassBalanceDeposits {
@@ -102,7 +107,7 @@ func payOutRewards(ctx context.Context, tx *sqldb.Tx, deposit *Deposit) error {
 		switch typ := r.Type; typ {
 		case commons.Voucher:
 			if err := payOutVoucherRewards(ctx, tx, r, deposit.UserPubKey); err != nil {
-				return err
+				return nil, err
 			}
 		case commons.Token:
 			panic("NOT SUPPORTED YET")
@@ -111,7 +116,7 @@ func payOutRewards(ctx context.Context, tx *sqldb.Tx, deposit *Deposit) error {
 		}
 	}
 
-	return nil
+	return rewards, nil
 }
 
 func payOutVoucherRewards(ctx context.Context, tx *sqldb.Tx, r commons.Reward, userPubKey string) error {

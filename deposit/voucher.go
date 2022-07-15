@@ -18,16 +18,16 @@ type Voucher struct {
 	Invalidated         bool
 }
 
-func mintVoucher(ctx context.Context, tx *sqldb.Tx, voucherDef *Definition, ownerPubKey string) (*Voucher, error) {
+func mintVoucher(ctx context.Context, tx *sqldb.Tx, voucherDef *Definition, ownerPubKey string) (string, error) {
 	id := commons.GenerateID()
 	if _, err := tx.Exec(ctx, `
         INSERT INTO voucher (id, voucher_definition_id, owner_pub_key, invalidated)
         VALUES ($1, $2, $3, $4);
     `, id, voucherDef.ID, ownerPubKey, false); err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return GetVoucher(ctx, &GetVoucherParams{VoucherID: id})
+	return id, nil
 }
 
 type GetVoucherParams struct {

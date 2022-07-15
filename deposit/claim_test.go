@@ -27,6 +27,14 @@ func TestClaim(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	definition, err := CreateVoucherDefinition(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &CreateVoucherDefinitionParams{
+		OrganizationID: testOrganizationId,
+		Name:           "Voucher def name",
+		PictureURL:     "https://does.not.matter.com",
+	})
+	require.NoError(t, err)
+	defaultTestRewards.RewardTypeID = definition.ID
+
 	collectionPointPubKey, _ := testutils.GenerateKeys()
 	testScheme, err := scheme.CreateScheme(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &scheme.CreateSchemeParams{
 		Name: "TestScheme",
@@ -130,6 +138,10 @@ func TestClaim(t *testing.T) {
 				require.NoError(t, err)
 				require.True(t, dbDeposit.Claimed)
 				require.Equal(t, userPubKey, dbDeposit.UserPubKey)
+
+				getVouchersResp, err := GetVouchersForUser(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetVouchersForUserParams{UserPubKey: test.userPubKey})
+				require.NoError(t, err)
+				require.Equal(t, 12, len(getVouchersResp.Vouchers))
 			} else {
 				require.Error(t, err)
 				require.Equal(t, test.errorCode, err.(*errs.Error).Code)
@@ -137,9 +149,13 @@ func TestClaim(t *testing.T) {
 				dbDeposit, err := GetDeposit(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetDepositParams{DepositID: deposit.ID})
 				require.NoError(t, err)
 				require.False(t, dbDeposit.Claimed)
+
+				getVouchersResp, err := GetVouchersForUser(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetVouchersForUserParams{UserPubKey: test.userPubKey})
+				require.NoError(t, err)
+				require.Equal(t, 0, len(getVouchersResp.Vouchers))
 			}
 
-			require.NoError(t, testutils.ClearDB(depositDB, "deposit"))
+			require.NoError(t, testutils.ClearDB(depositDB, "deposit", "voucher"))
 		})
 	}
 }
@@ -157,6 +173,14 @@ func TestDoubleClaim(t *testing.T) {
 		PubKey: organizationPubKey,
 	})
 	require.NoError(t, err)
+
+	definition, err := CreateVoucherDefinition(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &CreateVoucherDefinitionParams{
+		OrganizationID: testOrganizationId,
+		Name:           "Voucher def name",
+		PictureURL:     "https://does.not.matter.com",
+	})
+	require.NoError(t, err)
+	defaultTestRewards.RewardTypeID = definition.ID
 
 	collectionPointPubKey, _ := testutils.GenerateKeys()
 	testScheme, err := scheme.CreateScheme(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &scheme.CreateSchemeParams{

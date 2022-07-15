@@ -25,9 +25,9 @@ var (
 			MaterialDefinition: map[string]string{"materialType": "PET"},
 			Magnitude:          commons.Weight,
 		},
-		RewardType:   commons.Token,
+		RewardType:   commons.Voucher,
 		RewardTypeID: "",
-		PerItem:      0,
+		PerItem:      1,
 	}
 	defaultTestDeposit = []commons.MassBalance{
 		{
@@ -48,6 +48,14 @@ func TestMakeDeposit(t *testing.T) {
 		PubKey: organizationPubKey,
 	})
 	require.NoError(t, err)
+
+	definition, err := CreateVoucherDefinition(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &CreateVoucherDefinitionParams{
+		OrganizationID: testOrganizationId,
+		Name:           "Voucher def name",
+		PictureURL:     "https://does.not.matter.com",
+	})
+	require.NoError(t, err)
+	defaultTestRewards.RewardTypeID = definition.ID
 
 	collectionPointPubKey, _ := testutils.GenerateKeys()
 	notCollectionPointPubKey, _ := testutils.GenerateKeys()
