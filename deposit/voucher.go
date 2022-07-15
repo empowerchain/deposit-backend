@@ -1,4 +1,4 @@
-package voucher
+package deposit
 
 import (
 	"context"
@@ -18,28 +18,12 @@ type Voucher struct {
 	Invalidated         bool
 }
 
-type MintVoucherParams struct {
-	VoucherDefinitionID string `json:"voucherDefinitionID" validate:"required"`
-	PubKey              string `json:"pubKey" validate:"required"`
-}
-
-//encore:api private method=POST
-func MintVoucher(ctx context.Context, params *MintVoucherParams) (*Voucher, error) {
-	if err := commons.Validate(params); err != nil {
-		return nil, err
-	}
-
-	_, err := GetVoucherDefinition(ctx, &GetVoucherDefinitionParams{VoucherDefinitionID: params.VoucherDefinitionID})
-	if err != nil {
-		return nil, err
-	}
-
+func mintVoucher(ctx context.Context, tx *sqldb.Tx, voucherDef *Definition, ownerPubKey string) (*Voucher, error) {
 	id := commons.GenerateID()
-	_, err = sqldb.Exec(ctx, `
+	if _, err := tx.Exec(ctx, `
         INSERT INTO voucher (id, voucher_definition_id, owner_pub_key, invalidated)
         VALUES ($1, $2, $3, $4);
-    `, id, params.VoucherDefinitionID, params.PubKey, false)
-	if err != nil {
+    `, id, voucherDef.ID, ownerPubKey, false); err != nil {
 		return nil, err
 	}
 

@@ -10,7 +10,6 @@ import (
 	"encore.dev/beta/errs"
 	"encore.dev/storage/sqldb"
 	"errors"
-	"fmt"
 	"time"
 )
 
@@ -21,16 +20,17 @@ type Deposit struct {
 	UserPubKey            string
 	CreatedAt             time.Time
 	MassBalanceDeposits   []commons.MassBalance
+	Claimed               bool
 }
 
-type MakeDepositRequest struct {
+type MakeDepositParams struct {
 	SchemeID            string                `json:"schemeID" validate:"required"`
 	MassBalanceDeposits []commons.MassBalance `json:"massBalanceDeposits" validate:"required"`
 	UserPubKey          string                `json:"userPubKey"`
 }
 
 //encore:api auth method=POST
-func MakeDeposit(ctx context.Context, params *MakeDepositRequest) (*Deposit, error) {
+func MakeDeposit(ctx context.Context, params *MakeDepositParams) (*Deposit, error) {
 	if err := commons.Validate(params); err != nil {
 		return nil, err
 	}
@@ -56,10 +56,8 @@ func MakeDeposit(ctx context.Context, params *MakeDepositRequest) (*Deposit, err
 	}
 
 	for _, deposit := range params.MassBalanceDeposits {
-		fmt.Println("deposit", deposit.ItemDefinition)
 		depositIsAllowed := false
 		for _, allowed := range s.RewardDefinitions {
-			fmt.Println("allowed", allowed)
 			if allowed.ItemDefinition.SameAs(deposit.ItemDefinition) {
 				depositIsAllowed = true
 			}
@@ -76,7 +74,6 @@ func MakeDeposit(ctx context.Context, params *MakeDepositRequest) (*Deposit, err
 		ID:                    commons.GenerateID(),
 		SchemeID:              params.SchemeID,
 		CollectionPointPubKey: string(collectionPoint),
-		UserPubKey:            params.UserPubKey,
 		MassBalanceDeposits:   params.MassBalanceDeposits,
 	}
 
@@ -86,27 +83,41 @@ func MakeDeposit(ctx context.Context, params *MakeDepositRequest) (*Deposit, err
 	}
 
 	_, err = sqldb.Exec(ctx, `
-	        INSERT INTO deposit (id, scheme_id, collection_point_pub_key, user_pub_key, mass_balance_deposits)
-	        VALUES ($1, $2, $3, $4, $5)
-	    `, deposit.ID, deposit.SchemeID, deposit.CollectionPointPubKey, deposit.UserPubKey, string(jsonb))
+	        INSERT INTO deposit (id, scheme_id, collection_point_pub_key, mass_balance_deposits)
+	        VALUES ($1, $2, $3, $4)
+	    `, deposit.ID, deposit.SchemeID, deposit.CollectionPointPubKey, string(jsonb))
 	if err != nil {
 		return nil, err
 	}
 
-	return GetDeposit(ctx, &GetDepositRequest{
+	if params.UserPubKey != "" {
+		if _, err := Claim(ctx, &ClaimParams{
+			DepositID:  deposit.ID,
+			UserPubKey: params.UserPubKey,
+		}); err != nil {
+			// TODO: WE NEED A TRANSACTION SO THE DEPOSIT IS NOT CREATED
+			return nil, err
+		}
+	}
+
+	return GetDeposit(ctx, &GetDepositParams{
 		DepositID: deposit.ID,
 	})
 }
 
-type GetDepositRequest struct {
-	DepositID string
+type GetDepositParams struct {
+	DepositID string `json:"depositID" validate:"required"`
 }
 
 //encore:api auth method=POST
-func GetDeposit(ctx context.Context, params *GetDepositRequest) (*Deposit, error) {
+func GetDeposit(ctx context.Context, params *GetDepositParams) (*Deposit, error) {
+	if err := commons.Validate(params); err != nil {
+		return nil, err
+	}
+
 	var d Deposit
 	var massBalanceJson string
-	if err := sqldb.QueryRow(ctx, "SELECT * FROM deposit WHERE id=$1", params.DepositID).Scan(&d.ID, &d.SchemeID, &d.CollectionPointPubKey, &d.UserPubKey, &massBalanceJson, &d.CreatedAt); err != nil {
+	if err := sqldb.QueryRow(ctx, "SELECT * FROM deposit WHERE id=$1", params.DepositID).Scan(&d.ID, &d.SchemeID, &d.CollectionPointPubKey, &d.UserPubKey, &massBalanceJson, &d.Claimed, &d.CreatedAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &errs.Error{
 				Code: errs.NotFound,
@@ -146,7 +157,3 @@ func GetAllDeposits(_ context.Context) (*GetAllDepositsResponse, error) {
 
 	return resp, rows.Err()
 }
-
-//func (s Scheme) Deposit(collectionPointPubKey string, items []MassBalance, userPubKey string) (Deposit, error) {
-// If user is there, pay out reward
-//}

@@ -1,4 +1,4 @@
-package voucher
+package deposit
 
 import (
 	"context"
@@ -6,15 +6,8 @@ import (
 	"encore.app/commons/testutils"
 	"encore.app/organization"
 	"encore.dev/beta/errs"
-	"encore.dev/storage/sqldb"
 	"github.com/stretchr/testify/require"
 	"testing"
-)
-
-const testOrganizationId = "myOrgId1"
-
-var (
-	voucherDB = sqldb.Named("voucher")
 )
 
 func TestCreateVoucherDefinition(t *testing.T) {
@@ -90,7 +83,7 @@ func TestCreateVoucherDefinition(t *testing.T) {
 
 	for _, test := range testTable {
 		t.Run(test.name, func(t *testing.T) {
-			require.NoError(t, testutils.ClearDB(voucherDB, "voucher_definition"))
+			require.NoError(t, testutils.ClearDB(depositDB, "voucher_definition"))
 
 			var ctx context.Context
 			if test.uid != "" {

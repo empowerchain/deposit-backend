@@ -1,6 +1,9 @@
 package commons
 
-import "reflect"
+import (
+	"math/big"
+	"reflect"
+)
 
 type MagnitudeType int
 
@@ -33,5 +36,32 @@ const (
 type RewardDefinition struct {
 	ItemDefinition ItemDefinition
 	RewardType     RewardType
-	RewardPerUnit  int
+	RewardTypeID   string
+	PerItem        float64
+}
+
+type Reward struct {
+	Type   RewardType
+	TypeID string
+	Amount float64
+}
+
+func (rd RewardDefinition) GetRewardsFor(deposit MassBalance) Reward {
+	if !deposit.ItemDefinition.SameAs(rd.ItemDefinition) {
+		// This should _not_ happen. Ever. It is the caller's responsibility to make sure this can't happen.
+		panic("trying to get rewards for a deposit from a reward def of the wrong type")
+	}
+
+	perItem := big.NewFloat(rd.PerItem)
+	amountDeposited := big.NewFloat(deposit.Amount)
+
+	var rewardAmount big.Float
+	rewardAmount.Mul(amountDeposited, perItem)
+
+	rewardAmountF, _ := rewardAmount.Float64()
+	return Reward{
+		Type:   rd.RewardType,
+		TypeID: rd.RewardTypeID,
+		Amount: rewardAmountF,
+	}
 }

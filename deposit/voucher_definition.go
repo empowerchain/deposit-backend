@@ -1,4 +1,4 @@
-package voucher
+package deposit
 
 import (
 	"context"

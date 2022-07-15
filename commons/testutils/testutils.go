@@ -14,7 +14,6 @@ const (
 )
 
 var (
-	voucherDB = sqldb.Named("voucher")
 	orgDB     = sqldb.Named("organization")
 	depositDB = sqldb.Named("deposit")
 	schemeDB  = sqldb.Named("scheme")
@@ -37,13 +36,10 @@ func GenerateKeys() (publicKey string, privateKey *secp256k1.PrivKey) {
 }
 
 func ClearAllDBs() {
-	if err := ClearDB(voucherDB, "voucher", "voucher_definition"); err != nil {
-		panic(err)
-	}
 	if err := ClearDB(orgDB, "organization"); err != nil {
 		panic(err)
 	}
-	if err := ClearDB(depositDB, "deposit"); err != nil {
+	if err := ClearDB(depositDB, "deposit", "voucher", "voucher_definition"); err != nil {
 		panic(err)
 	}
 	if err := ClearDB(schemeDB, "scheme"); err != nil {

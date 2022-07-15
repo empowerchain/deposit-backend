@@ -1,4 +1,4 @@
-package voucher
+package deposit
 
 import (
 	"context"
@@ -9,99 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"testing"
 )
-
-func TestMintVoucher(t *testing.T) {
-	testutils.ClearAllDBs()
-	require.NoError(t, admin.InsertTestData(context.Background()))
-
-	ownerPubKey, _ := testutils.GenerateKeys()
-
-	organizationPubKey, _ := testutils.GenerateKeys()
-	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
-		ID:     testOrganizationId,
-		Name:   testOrganizationId,
-		PubKey: organizationPubKey,
-	})
-	require.NoError(t, err)
-
-	voucherDefinition, err := CreateVoucherDefinition(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &CreateVoucherDefinitionParams{
-		OrganizationID: testOrganizationId,
-		Name:           "My voucher",
-		PictureURL:     "https://whatever.com/pic.jpeg",
-	})
-
-	testTable := []struct {
-		name      string
-		params    MintVoucherParams
-		errorCode errs.ErrCode
-		uid       string
-	}{
-		{
-			name: "Happy path",
-			params: MintVoucherParams{
-				VoucherDefinitionID: voucherDefinition.ID,
-				PubKey:              ownerPubKey,
-			},
-			errorCode: errs.OK,
-			uid:       testutils.AdminPubKey,
-		},
-		{
-			name: "Voucher def not found",
-			params: MintVoucherParams{
-				VoucherDefinitionID: "this does not exist",
-				PubKey:              ownerPubKey,
-			},
-			errorCode: errs.NotFound,
-			uid:       testutils.AdminPubKey,
-		},
-		{
-			name: "unauthenticated",
-			params: MintVoucherParams{
-				VoucherDefinitionID: voucherDefinition.ID,
-				PubKey:              ownerPubKey,
-			},
-			errorCode: errs.Unauthenticated,
-			uid:       "",
-		},
-	}
-
-	for _, test := range testTable {
-		t.Run(test.name, func(t *testing.T) {
-			require.NoError(t, testutils.ClearDB(voucherDB, "voucher"))
-
-			var ctx context.Context
-			if test.uid != "" {
-				ctx = testutils.GetAuthenticatedContext(test.uid)
-			} else {
-				ctx = context.Background()
-			}
-			resp, err := MintVoucher(ctx, &test.params)
-			if test.errorCode == errs.OK {
-				require.NoError(t, err)
-				require.NotEqual(t, "", resp.ID)
-				require.Equal(t, test.params.VoucherDefinitionID, resp.VoucherDefinitionID)
-				require.Equal(t, test.params.PubKey, resp.OwnerPubKey)
-
-				allVouchers, err := GetAllVouchers(testutils.GetAuthenticatedContext(testutils.AdminPubKey))
-				require.NoError(t, err)
-				require.Equal(t, 1, len(allVouchers.Vouchers))
-
-				dbVoucher, err := GetVoucher(ctx, &GetVoucherParams{VoucherID: resp.ID})
-				require.NoError(t, err)
-				require.Equal(t, resp.ID, dbVoucher.ID)
-				require.Equal(t, test.params.VoucherDefinitionID, dbVoucher.VoucherDefinitionID)
-				require.Equal(t, test.params.PubKey, dbVoucher.OwnerPubKey)
-			} else {
-				require.Error(t, err)
-				require.Equal(t, test.errorCode, err.(*errs.Error).Code)
-
-				allVouchers, err := GetAllVouchers(testutils.GetAuthenticatedContext(testutils.AdminPubKey))
-				require.NoError(t, err)
-				require.Equal(t, 0, len(allVouchers.Vouchers))
-			}
-		})
-	}
-}
 
 func TestGetAllVouchers(t *testing.T) {
 	testutils.ClearAllDBs()
@@ -257,7 +164,7 @@ func TestInvalidateVoucher(t *testing.T) {
 
 	for _, test := range testTable {
 		t.Run(test.name, func(t *testing.T) {
-			require.NoError(t, testutils.ClearDB(voucherDB, "voucher"))
+			require.NoError(t, testutils.ClearDB(depositDB, "voucher"))
 
 			voucher, err := MintVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &MintVoucherParams{
 				VoucherDefinitionID: voucherDefinition.ID,

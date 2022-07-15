@@ -25,8 +25,9 @@ var (
 			MaterialDefinition: map[string]string{"materialType": "PET"},
 			Magnitude:          commons.Weight,
 		},
-		RewardType:    commons.Token,
-		RewardPerUnit: 1,
+		RewardType:   commons.Token,
+		RewardTypeID: "",
+		PerItem:      0,
 	}
 	defaultTestDeposit = []commons.MassBalance{
 		{
@@ -67,14 +68,14 @@ func TestMakeDeposit(t *testing.T) {
 
 	testTable := []struct {
 		name          string
-		params        MakeDepositRequest
+		params        MakeDepositParams
 		errorCode     errs.ErrCode
 		authenticated bool
 		uid           string
 	}{
 		{
 			name: "Happy path with user",
-			params: MakeDepositRequest{
+			params: MakeDepositParams{
 				SchemeID:            testScheme.ID,
 				UserPubKey:          testUserPubKey,
 				MassBalanceDeposits: defaultTestDeposit,
@@ -85,7 +86,7 @@ func TestMakeDeposit(t *testing.T) {
 		},
 		{
 			name: "Missing items",
-			params: MakeDepositRequest{
+			params: MakeDepositParams{
 				SchemeID:   testScheme.ID,
 				UserPubKey: testUserPubKey,
 			},
@@ -95,7 +96,7 @@ func TestMakeDeposit(t *testing.T) {
 		},
 		{
 			name: "Scheme not found",
-			params: MakeDepositRequest{
+			params: MakeDepositParams{
 				SchemeID:            "doesNotExist",
 				UserPubKey:          testUserPubKey,
 				MassBalanceDeposits: defaultTestDeposit,
@@ -106,7 +107,7 @@ func TestMakeDeposit(t *testing.T) {
 		},
 		{
 			name: "Unauthenticated",
-			params: MakeDepositRequest{
+			params: MakeDepositParams{
 				SchemeID:            testScheme.ID,
 				UserPubKey:          testUserPubKey,
 				MassBalanceDeposits: defaultTestDeposit,
@@ -116,7 +117,7 @@ func TestMakeDeposit(t *testing.T) {
 		},
 		{
 			name: "Unauthorized collection point",
-			params: MakeDepositRequest{
+			params: MakeDepositParams{
 				SchemeID:            testScheme.ID,
 				UserPubKey:          testUserPubKey,
 				MassBalanceDeposits: defaultTestDeposit,
@@ -127,7 +128,7 @@ func TestMakeDeposit(t *testing.T) {
 		},
 		{
 			name: "Item not allowed",
-			params: MakeDepositRequest{
+			params: MakeDepositParams{
 				SchemeID:   testScheme.ID,
 				UserPubKey: testUserPubKey,
 				MassBalanceDeposits: []commons.MassBalance{
@@ -148,10 +149,8 @@ func TestMakeDeposit(t *testing.T) {
 
 	for _, test := range testTable {
 		t.Run(test.name, func(t *testing.T) {
-			var ctx context.Context
-			if test.authenticated {
-				ctx = testutils.GetAuthenticatedContext(test.uid)
-			} else {
+			ctx := testutils.GetAuthenticatedContext(test.uid)
+			if !test.authenticated {
 				ctx = context.Background()
 			}
 
@@ -164,13 +163,15 @@ func TestMakeDeposit(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, 1, len(getAllResp.Deposits))
 
-				dbDeposit, err := GetDeposit(ctx, &GetDepositRequest{
+				dbDeposit, err := GetDeposit(ctx, &GetDepositParams{
 					DepositID: deposit.ID,
 				})
 				require.NoError(t, err)
 				require.Equal(t, test.params.SchemeID, dbDeposit.SchemeID)
 				require.Equal(t, test.params.UserPubKey, dbDeposit.UserPubKey)
 				require.Equal(t, test.params.MassBalanceDeposits, dbDeposit.MassBalanceDeposits)
+				shouldBeClaimed := dbDeposit.UserPubKey != ""
+				require.Equal(t, shouldBeClaimed, dbDeposit.Claimed)
 			} else {
 				require.Error(t, err)
 				require.Equal(t, test.errorCode, err.(*errs.Error).Code)
