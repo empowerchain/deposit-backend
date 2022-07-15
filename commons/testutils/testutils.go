@@ -5,17 +5,54 @@ import (
 	"encoding/hex"
 	"encore.dev/beta/auth"
 	"encore.dev/storage/sqldb"
+	"fmt"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+)
+
+const (
+	AdminPubKey = "02714571c89d4a7626aa4fe07cf049b944f1b584781c4ec45662992180540b17f5"
+)
+
+var (
+	orgDB     = sqldb.Named("organization")
+	depositDB = sqldb.Named("deposit")
+	schemeDB  = sqldb.Named("scheme")
 )
 
 var defaultSigner = secp256k1.GenPrivKey()
 
-func GetAuthenticatedContext() context.Context {
-	pubKeyHex := hex.EncodeToString(defaultSigner.PubKey().Bytes())
-	return auth.WithContext(context.Background(), auth.UID(pubKeyHex), nil)
+func GetAuthenticatedContext(uid string) context.Context {
+	if uid == "" {
+		uid = hex.EncodeToString(defaultSigner.PubKey().Bytes())
+	}
+
+	return auth.WithContext(context.Background(), auth.UID(uid), nil)
 }
 
-func ClearDb() error {
-	_, err := sqldb.Exec(context.Background(), "TRUNCATE scheme")
-	return err
+func GenerateKeys() (publicKey string, privateKey *secp256k1.PrivKey) {
+	privateKey = secp256k1.GenPrivKey()
+	publicKey = hex.EncodeToString(privateKey.PubKey().Bytes())
+	return
+}
+
+func ClearAllDBs() {
+	if err := ClearDB(orgDB, "organization"); err != nil {
+		panic(err)
+	}
+	if err := ClearDB(depositDB, "deposit", "voucher", "voucher_definition"); err != nil {
+		panic(err)
+	}
+	if err := ClearDB(schemeDB, "scheme"); err != nil {
+		panic(err)
+	}
+}
+
+func ClearDB(db *sqldb.Database, tables ...string) error {
+	for _, table := range tables {
+		if _, err := db.Exec(context.Background(), fmt.Sprintf("DELETE FROM %s", table)); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

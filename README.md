@@ -7,3 +7,15 @@ Take a look at the White Paper for more details: https://github.com/empowerchain
 ## Auth
 
 Auth is documented under [commons/auth.md](commons/auth.md).
+
+## Logical flow
+
+The following illustration documents the logical flow of data in the application:
+
+![Logical flow](logic_flow.jpg)
+
+## Data model
+
+The following illustration documents the current data model and how the relations are built
+
+![Data model](data_model.jpg)
