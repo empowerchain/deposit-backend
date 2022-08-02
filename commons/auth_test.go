@@ -14,32 +14,30 @@ import (
 
 var defaultSigner = secp256k1.GenPrivKey()
 
-func TestAuthHandlerPreset(t *testing.T) {
-	uid, err := AuthHandler(context.Background(), "ewogICJwYXlsb2FkIjogImV3b2dJQ0p3ZFdKTFpYa2lPaUFpTURKbU5EUTJOVEF5WkRCaE1HVXlPR1prWVRReU1EaGlabUZqTlRNNFpHWTROakl4Tm1ReU1ETTBZVGhqWldJeU1qWTROMk14TTJJNE1XUTBaalZsWkRNMElpd0tJQ0FpWTJ4cFpXNTBJam9pWlcxd2IzZGxjaTFrWlhCdmMybDBMV0Z3Y0NJc0NpQWdJblJwYldWemRHRnRjQ0k2TVRZMU5qazBNekl3TndwOSIsCiAgInNpZ25hdHVyZSI6ICI4OWJhNDA5ZjNmZDAxYzE1YzAwNGMzNjA4NjUzYzRkMjFkZmU4NjY4ZTc0N2M4ZDljNmM1N2M1ZDQzOTY3NjQ5NzUxYzVjZGQyZDE3YzRjMTVhY2E2MTE1YTVhYzZiMDIzZDcxYWY2NjJmMThkMGNlOWU2MzdmZTE5NDI0NmY1ZSIKfQ==")
-	require.NoError(t, err)
-	require.Equal(t, "02f446502d0a0e28fda4208bfac538df86216d2034a8ceb22687c13b81d4f5ed34", string(uid))
-}
-
 func TestAuthHandler(t *testing.T) {
 	tests := []struct {
+		name          string
 		signerPrivKey *secp256k1.PrivKey
 		pubKey        *secp256k1.PubKey
 		client        string
 		errorCode     errs.ErrCode
 	}{
 		{
+			name:          "Happy path",
 			signerPrivKey: defaultSigner,
 			pubKey:        defaultSigner.PubKey().(*secp256k1.PubKey),
 			client:        clientName,
 			errorCode:     errs.OK,
 		},
 		{
+			name:          "Different private and public key",
 			signerPrivKey: secp256k1.GenPrivKey(),
 			pubKey:        defaultSigner.PubKey().(*secp256k1.PubKey),
 			client:        clientName,
 			errorCode:     errs.Unauthenticated,
 		},
 		{
+			name:          "Invalid client name",
 			signerPrivKey: defaultSigner,
 			pubKey:        defaultSigner.PubKey().(*secp256k1.PubKey),
 			client:        "invalidClientName",
@@ -48,33 +46,66 @@ func TestAuthHandler(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		pubKeyHex := hex.EncodeToString(test.pubKey.Bytes())
+		t.Run(test.name, func(t *testing.T) {
+			authDataB64, pubKeyHex, err := getToken(test.signerPrivKey, test.pubKey, test.client)
+			require.NoError(t, err)
+			uid, err := AuthHandler(context.Background(), authDataB64)
 
-		payloadStr := fmt.Sprintf(`{
+			if test.errorCode == errs.OK {
+				require.NoError(t, err)
+				require.Equal(t, string(uid), pubKeyHex)
+			} else {
+				require.Error(t, err)
+				require.Equal(t, test.errorCode, err.(*errs.Error).Code)
+			}
+		})
+	}
+}
+
+func TestFromPrivateKey(t *testing.T) {
+	privateKeyBytes, err := hex.DecodeString("1eaa8d64b64c130d8690791e16e800f8e1bac55dd49aed88b325f3818770aa31")
+	require.NoError(t, err)
+	privateKey := &secp256k1.PrivKey{
+		Key: privateKeyBytes,
+	}
+	publicKey := privateKey.PubKey().(*secp256k1.PubKey)
+
+	token, pubKeyHex, err := getToken(privateKey, publicKey, clientName)
+	require.NoError(t, err)
+
+	uid, err := AuthHandler(context.Background(), token)
+	require.NoError(t, err)
+	require.Equal(t, pubKeyHex, string(uid))
+}
+
+func getToken(signerPrivKey *secp256k1.PrivKey, pubKey *secp256k1.PubKey, client string) (string, string, error) {
+	pubKeyHex := hex.EncodeToString(pubKey.Bytes())
+
+	payloadStr := fmt.Sprintf(`{
   "pubKey": "%s",
   "client":"%s",
   "timestamp":%d
-}`, pubKeyHex, test.client, time.Now().Unix())
-		payload := base64.StdEncoding.EncodeToString([]byte(payloadStr))
+}`, pubKeyHex, client, time.Now().Unix())
+	payload := base64.StdEncoding.EncodeToString([]byte(payloadStr))
 
-		payloadSignatureB, err := test.signerPrivKey.Sign([]byte(payload))
-		require.NoError(t, err)
+	payloadSignatureB, err := signerPrivKey.Sign([]byte(payload))
+	if err != nil {
+		return "", "", err
+	}
 
-		authData := fmt.Sprintf(`{
+	authData := fmt.Sprintf(`{
   "payload": "%s",
   "signature": "%s"
 }`, payload, hex.EncodeToString(payloadSignatureB))
 
-		authDataB64 := base64.StdEncoding.EncodeToString([]byte(authData))
-		fmt.Println(authDataB64)
-		uid, err := AuthHandler(context.Background(), authDataB64)
+	authDataB64 := base64.StdEncoding.EncodeToString([]byte(authData))
 
-		if test.errorCode == errs.OK {
-			require.NoError(t, err)
-			require.Equal(t, string(uid), pubKeyHex)
-		} else {
-			require.Error(t, err)
-			require.Equal(t, test.errorCode, err.(*errs.Error).Code)
-		}
-	}
+	return authDataB64, pubKeyHex, nil
+}
+
+func TestFrontendCreatedAuth(t *testing.T) {
+	token := "eyJwYXlsb2FkIjoiZXlKd2RXSkxaWGtpT2lJd00yVmxPVGswTkRVd1ptWXlaVGt5WmpRNFpETmpObUZrTXpCbVpUSXhNRFJrWXpoaU1qVXhOREEyWWpFMVltSmxZVEZpWVRabE5UVXhOak5qWXpJMlpUa2lMQ0pqYkdsbGJuUWlPaUpsYlhCdmQyVnlMV1JsY0c5emFYUXRZWEJ3SWl3aWRHbHRaWE4wWVcxd0lqb3hOalUyT1RRek16QXhmUT09Iiwic2lnbmF0dXJlIjoiMDMwNzU0M2YzOWQ4ODg3ZjQ5MzA0OWM3MjUyNmU0Zjk0M2U4NTNmNDE3ZjQ4N2E2YWUyNWU3Y2FiOWM4OWJiMzFjZGI4MjNjODk4NjI3OWI3YTA4ZmU3ZWJhZjkwMzdiZDFlOTE2M2VmMTNiNmIwMGIxODM1YWMwYzVkNDhmOGIifQ=="
+	uid, err := AuthHandler(context.Background(), token)
+	require.NoError(t, err)
+	require.Equal(t, "03ee994450ff2e92f48d3c6ad30fe2104dc8b251406b15bbea1ba6e55163cc26e9", string(uid))
 }
