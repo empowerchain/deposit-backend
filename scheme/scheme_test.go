@@ -70,16 +70,6 @@ func TestCreateScheme(t *testing.T) {
 		},
 		// TODO: TEST MORE PARAMS
 		{
-			name: "Unauthenticated",
-			params: CreateSchemeParams{
-				Name:              "Valid",
-				OrganizationID:    testOrganizationId,
-				RewardDefinitions: defaultTestRewards,
-			},
-			errorCode: errs.Unauthenticated,
-			uid:       "",
-		},
-		{
 			name: "Organization doesnt exist",
 			params: CreateSchemeParams{
 				Name:              "Valid",
@@ -116,9 +106,6 @@ func TestCreateScheme(t *testing.T) {
 			require.NoError(t, testutils.ClearDB(schemeDB, "scheme"))
 
 			ctx := testutils.GetAuthenticatedContext(test.uid)
-			if test.uid == "" {
-				ctx = context.Background()
-			}
 			resp, err := CreateScheme(ctx, &test.params)
 			if test.errorCode == errs.OK {
 				require.NoError(t, err)
@@ -173,12 +160,6 @@ func TestAddCollectionPoint(t *testing.T) {
 			uid:         organizationPubKey,
 		},
 		{
-			name:        "Unauthenticated",
-			useSchemeID: true,
-			errorCode:   errs.Unauthenticated,
-			uid:         "",
-		},
-		{
 			name:        "Unauthorized",
 			useSchemeID: true,
 			errorCode:   errs.PermissionDenied,
@@ -210,9 +191,6 @@ func TestAddCollectionPoint(t *testing.T) {
 			require.NoError(t, err)
 
 			ctx := testutils.GetAuthenticatedContext(test.uid)
-			if test.uid == "" {
-				ctx = context.Background()
-			}
 
 			schemeID := scheme.ID
 			if !test.useSchemeID {

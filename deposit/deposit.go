@@ -18,6 +18,7 @@ type Deposit struct {
 	SchemeID              string
 	CollectionPointPubKey string
 	UserPubKey            string
+	ExternalRef           string
 	CreatedAt             time.Time
 	MassBalanceDeposits   []commons.MassBalance
 	Claimed               bool
@@ -27,6 +28,7 @@ type MakeDepositParams struct {
 	SchemeID            string                `json:"schemeID" validate:"required"`
 	MassBalanceDeposits []commons.MassBalance `json:"massBalanceDeposits" validate:"required"`
 	UserPubKey          string                `json:"userPubKey"`
+	ExternalRef         string                `json:"externalRef"`
 }
 
 //encore:api auth method=POST
@@ -75,6 +77,7 @@ func MakeDeposit(ctx context.Context, params *MakeDepositParams) (*Deposit, erro
 		SchemeID:              params.SchemeID,
 		CollectionPointPubKey: string(collectionPoint),
 		MassBalanceDeposits:   params.MassBalanceDeposits,
+		ExternalRef:           params.ExternalRef,
 	}
 
 	jsonb, err := json.Marshal(&deposit.MassBalanceDeposits)
@@ -83,9 +86,9 @@ func MakeDeposit(ctx context.Context, params *MakeDepositParams) (*Deposit, erro
 	}
 
 	_, err = sqldb.Exec(ctx, `
-	        INSERT INTO deposit (id, scheme_id, collection_point_pub_key, mass_balance_deposits)
-	        VALUES ($1, $2, $3, $4)
-	    `, deposit.ID, deposit.SchemeID, deposit.CollectionPointPubKey, string(jsonb))
+	        INSERT INTO deposit (id, scheme_id, collection_point_pub_key, mass_balance_deposits, external_ref)
+	        VALUES ($1, $2, $3, $4, $5)
+	    `, deposit.ID, deposit.SchemeID, deposit.CollectionPointPubKey, string(jsonb), deposit.ExternalRef)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +120,35 @@ func GetDeposit(ctx context.Context, params *GetDepositParams) (*Deposit, error)
 
 	var d Deposit
 	var massBalanceJson string
-	if err := sqldb.QueryRow(ctx, "SELECT * FROM deposit WHERE id=$1", params.DepositID).Scan(&d.ID, &d.SchemeID, &d.CollectionPointPubKey, &d.UserPubKey, &massBalanceJson, &d.Claimed, &d.CreatedAt); err != nil {
+	if err := sqldb.QueryRow(ctx, "SELECT id, scheme_id, collection_point_pub_key, user_pub_key, mass_balance_deposits, claimed, created_at FROM deposit WHERE id=$1", params.DepositID).Scan(&d.ID, &d.SchemeID, &d.CollectionPointPubKey, &d.UserPubKey, &massBalanceJson, &d.Claimed, &d.CreatedAt); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, &errs.Error{
+				Code: errs.NotFound,
+			}
+		}
+		return nil, err
+	}
+
+	if err := json.Unmarshal([]byte(massBalanceJson), &d.MassBalanceDeposits); err != nil {
+		return nil, err
+	}
+	return &d, nil
+}
+
+type GetDepositByExternalRefParams struct {
+	CollectionPointPubKey string `json:"collectionPointPubKey" validate:"required"`
+	ExternalRef           string `json:"externalRef" validate:"required"`
+}
+
+//encore:api auth method=POST
+func GetDepositByExternalRef(ctx context.Context, params *GetDepositByExternalRefParams) (*Deposit, error) {
+	if err := commons.Validate(params); err != nil {
+		return nil, err
+	}
+
+	var d Deposit
+	var massBalanceJson string
+	if err := sqldb.QueryRow(ctx, "SELECT id, scheme_id, collection_point_pub_key, user_pub_key, mass_balance_deposits, claimed, created_at FROM deposit WHERE collection_point_pub_key=$1 AND external_ref=$2", params.CollectionPointPubKey, params.ExternalRef).Scan(&d.ID, &d.SchemeID, &d.CollectionPointPubKey, &d.UserPubKey, &massBalanceJson, &d.Claimed, &d.CreatedAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &errs.Error{
 				Code: errs.NotFound,

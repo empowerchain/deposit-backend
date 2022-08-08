@@ -3,6 +3,7 @@ package testutils
 import (
 	"context"
 	"encoding/hex"
+	_ "encore.dev/appruntime/app/appinit"
 	"encore.dev/beta/auth"
 	"encore.dev/storage/sqldb"
 	"fmt"

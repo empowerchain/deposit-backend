@@ -43,6 +43,7 @@ func TestClaim(t *testing.T) {
 		},
 		OrganizationID: testOrganizationId,
 	})
+
 	require.NoError(t, err)
 
 	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(organizationPubKey), &scheme.AddCollectionPointParams{
@@ -56,7 +57,6 @@ func TestClaim(t *testing.T) {
 		userPubKey     string
 		errorCode      errs.ErrCode
 		useRealDeposit bool
-		authenticated  bool
 		uid            string
 	}{
 		{
@@ -64,7 +64,6 @@ func TestClaim(t *testing.T) {
 			userPubKey:     userPubKey,
 			errorCode:      errs.OK,
 			useRealDeposit: true,
-			authenticated:  true,
 			uid:            userPubKey,
 		},
 		{
@@ -72,7 +71,6 @@ func TestClaim(t *testing.T) {
 			userPubKey:     userPubKey,
 			errorCode:      errs.OK,
 			useRealDeposit: true,
-			authenticated:  true,
 			uid:            collectionPointPubKey,
 		},
 		{
@@ -80,7 +78,6 @@ func TestClaim(t *testing.T) {
 			userPubKey:     userPubKey,
 			errorCode:      errs.OK,
 			useRealDeposit: true,
-			authenticated:  true,
 			uid:            testutils.AdminPubKey,
 		},
 		{
@@ -88,7 +85,6 @@ func TestClaim(t *testing.T) {
 			userPubKey:     userPubKey,
 			errorCode:      errs.PermissionDenied,
 			useRealDeposit: true,
-			authenticated:  true,
 			uid:            notUserPubKey,
 		},
 		{
@@ -96,15 +92,7 @@ func TestClaim(t *testing.T) {
 			userPubKey:     userPubKey,
 			errorCode:      errs.NotFound,
 			useRealDeposit: false,
-			authenticated:  true,
 			uid:            userPubKey,
-		},
-		{
-			name:           "Unauthenticated",
-			userPubKey:     userPubKey,
-			errorCode:      errs.Unauthenticated,
-			useRealDeposit: true,
-			authenticated:  false,
 		},
 	}
 
@@ -117,9 +105,6 @@ func TestClaim(t *testing.T) {
 			require.NoError(t, err)
 
 			ctx := testutils.GetAuthenticatedContext(test.uid)
-			if !test.authenticated {
-				ctx = context.Background()
-			}
 
 			depositID := deposit.ID
 			if !test.useRealDeposit {

@@ -146,12 +146,6 @@ func TestInvalidateVoucher(t *testing.T) {
 			uid:              testutils.AdminPubKey,
 		},
 		{
-			name:             "Unauthenticated",
-			useRealVoucherID: true,
-			errorCode:        errs.Unauthenticated,
-			uid:              "",
-		},
-		{
 			name:             "Not found",
 			useRealVoucherID: false,
 			errorCode:        errs.NotFound,
@@ -170,9 +164,6 @@ func TestInvalidateVoucher(t *testing.T) {
 			require.NoError(t, tx.Commit())
 
 			ctx := testutils.GetAuthenticatedContext(test.uid)
-			if test.uid == "" {
-				ctx = context.Background()
-			}
 
 			voucherID := mintedVoucherId
 			if !test.useRealVoucherID {

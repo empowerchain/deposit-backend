@@ -40,16 +40,6 @@ func TestCreateVoucherDefinition(t *testing.T) {
 			uid:       organizationPubKey,
 		},
 		{
-			name: "Unauthenticated",
-			params: CreateVoucherDefinitionParams{
-				OrganizationID: testOrganizationId,
-				Name:           "My voucher def",
-				PictureURL:     "https://whatever.com/image.png",
-			},
-			errorCode: errs.Unauthenticated,
-			uid:       "",
-		},
-		{
 			name: "Organization does not exist",
 			params: CreateVoucherDefinitionParams{
 				OrganizationID: "does not exist",
@@ -85,12 +75,7 @@ func TestCreateVoucherDefinition(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			require.NoError(t, testutils.ClearDB(depositDB, "voucher_definition"))
 
-			var ctx context.Context
-			if test.uid != "" {
-				ctx = testutils.GetAuthenticatedContext(test.uid)
-			} else {
-				ctx = context.Background()
-			}
+			ctx := testutils.GetAuthenticatedContext(test.uid)
 			resp, err := CreateVoucherDefinition(ctx, &test.params)
 			if test.errorCode == errs.OK {
 				require.NoError(t, err)

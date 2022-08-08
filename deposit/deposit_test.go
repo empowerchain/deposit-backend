@@ -75,11 +75,10 @@ func TestMakeDeposit(t *testing.T) {
 	require.NoError(t, err)
 
 	testTable := []struct {
-		name          string
-		params        MakeDepositParams
-		errorCode     errs.ErrCode
-		authenticated bool
-		uid           string
+		name      string
+		params    MakeDepositParams
+		errorCode errs.ErrCode
+		uid       string
 	}{
 		{
 			name: "Happy path with user",
@@ -88,9 +87,8 @@ func TestMakeDeposit(t *testing.T) {
 				UserPubKey:          testUserPubKey,
 				MassBalanceDeposits: defaultTestDeposit,
 			},
-			errorCode:     errs.OK,
-			authenticated: true,
-			uid:           collectionPointPubKey,
+			errorCode: errs.OK,
+			uid:       collectionPointPubKey,
 		},
 		{
 			name: "Missing items",
@@ -98,9 +96,8 @@ func TestMakeDeposit(t *testing.T) {
 				SchemeID:   testScheme.ID,
 				UserPubKey: testUserPubKey,
 			},
-			errorCode:     errs.InvalidArgument,
-			authenticated: true,
-			uid:           collectionPointPubKey,
+			errorCode: errs.InvalidArgument,
+			uid:       collectionPointPubKey,
 		},
 		{
 			name: "Scheme not found",
@@ -109,9 +106,8 @@ func TestMakeDeposit(t *testing.T) {
 				UserPubKey:          testUserPubKey,
 				MassBalanceDeposits: defaultTestDeposit,
 			},
-			errorCode:     errs.NotFound,
-			authenticated: true,
-			uid:           collectionPointPubKey,
+			errorCode: errs.NotFound,
+			uid:       collectionPointPubKey,
 		},
 		{
 			name: "Unauthenticated",
@@ -120,8 +116,7 @@ func TestMakeDeposit(t *testing.T) {
 				UserPubKey:          testUserPubKey,
 				MassBalanceDeposits: defaultTestDeposit,
 			},
-			errorCode:     errs.Unauthenticated,
-			authenticated: false,
+			errorCode: errs.PermissionDenied,
 		},
 		{
 			name: "Unauthorized collection point",
@@ -130,9 +125,8 @@ func TestMakeDeposit(t *testing.T) {
 				UserPubKey:          testUserPubKey,
 				MassBalanceDeposits: defaultTestDeposit,
 			},
-			errorCode:     errs.PermissionDenied,
-			authenticated: true,
-			uid:           notCollectionPointPubKey,
+			errorCode: errs.PermissionDenied,
+			uid:       notCollectionPointPubKey,
 		},
 		{
 			name: "Item not allowed",
@@ -149,18 +143,14 @@ func TestMakeDeposit(t *testing.T) {
 					},
 				},
 			},
-			errorCode:     errs.InvalidArgument,
-			authenticated: true,
-			uid:           collectionPointPubKey,
+			errorCode: errs.InvalidArgument,
+			uid:       collectionPointPubKey,
 		},
 	}
 
 	for _, test := range testTable {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := testutils.GetAuthenticatedContext(test.uid)
-			if !test.authenticated {
-				ctx = context.Background()
-			}
 
 			deposit, err := MakeDeposit(ctx, &test.params)
 			if test.errorCode == errs.OK {
@@ -192,4 +182,64 @@ func TestMakeDeposit(t *testing.T) {
 			require.NoError(t, testutils.ClearDB(depositDB, "deposit"))
 		})
 	}
+}
+
+func TestGetDeposit(t *testing.T) {
+	require.NoError(t, admin.InsertTestData(context.Background()))
+	testutils.ClearAllDBs()
+
+	organizationPubKey, _ := testutils.GenerateKeys()
+	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
+		ID:     testOrganizationId,
+		Name:   testOrganizationId,
+		PubKey: organizationPubKey,
+	})
+	require.NoError(t, err)
+
+	definition, err := CreateVoucherDefinition(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &CreateVoucherDefinitionParams{
+		OrganizationID: testOrganizationId,
+		Name:           "Voucher def name",
+		PictureURL:     "https://does.not.matter.com",
+	})
+	require.NoError(t, err)
+	defaultTestRewards.RewardTypeID = definition.ID
+
+	collectionPointPubKey, _ := testutils.GenerateKeys()
+	testScheme, err := scheme.CreateScheme(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &scheme.CreateSchemeParams{
+		Name: "TestScheme",
+		RewardDefinitions: []commons.RewardDefinition{
+			defaultTestRewards,
+		},
+		OrganizationID: testOrganizationId,
+	})
+	require.NoError(t, err)
+
+	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(organizationPubKey), &scheme.AddCollectionPointParams{
+		SchemeID:              testScheme.ID,
+		CollectionPointPubKey: collectionPointPubKey,
+	})
+	require.NoError(t, err)
+
+	externalRef := "myExternalRef123"
+	ctx := testutils.GetAuthenticatedContext(collectionPointPubKey)
+	deposit, err := MakeDeposit(ctx, &MakeDepositParams{
+		SchemeID:            testScheme.ID,
+		UserPubKey:          testUserPubKey,
+		MassBalanceDeposits: defaultTestDeposit,
+		ExternalRef:         externalRef,
+	})
+	require.NoError(t, err)
+
+	getDepositWithId, err := GetDeposit(ctx, &GetDepositParams{
+		DepositID: deposit.ID,
+	})
+	require.NoError(t, err)
+	require.Equal(t, deposit.ID, getDepositWithId.ID)
+
+	getDepositWithExternalRef, err := GetDepositByExternalRef(ctx, &GetDepositByExternalRefParams{
+		CollectionPointPubKey: collectionPointPubKey,
+		ExternalRef:           externalRef,
+	})
+	require.NoError(t, err)
+	require.Equal(t, deposit.ID, getDepositWithExternalRef.ID)
 }
