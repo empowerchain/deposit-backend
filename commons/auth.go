@@ -7,10 +7,12 @@ import (
 	"encoding/json"
 	"encore.dev/beta/auth"
 	"encore.dev/beta/errs"
+	"fmt"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"time"
 )
 
-const clientName = "empower-deposit-app"
+const ClientName = "empower-deposit-app"
 
 type AuthData struct {
 	Payload   string `json:"payload"`
@@ -40,7 +42,7 @@ func AuthHandler(_ context.Context, token string) (auth.UID, error) {
 		return "", errs.WrapCode(err, errs.Unauthenticated, "")
 	}
 
-	if authPayload.Client != clientName {
+	if authPayload.Client != ClientName {
 		return "", &errs.Error{
 			Code: errs.Unauthenticated,
 		}
@@ -64,4 +66,30 @@ func AuthHandler(_ context.Context, token string) (auth.UID, error) {
 	}
 
 	return auth.UID(authPayload.PubKey), nil
+}
+
+// FYI, kept here instead of test because it is used by tmp.GenerateKey
+func GetToken(signerPrivKey *secp256k1.PrivKey, pubKey *secp256k1.PubKey, client string) (string, string, error) {
+	pubKeyHex := hex.EncodeToString(pubKey.Bytes())
+
+	payloadStr := fmt.Sprintf(`{
+  "pubKey": "%s",
+  "client":"%s",
+  "timestamp":%d
+}`, pubKeyHex, client, time.Now().Unix())
+	payload := base64.StdEncoding.EncodeToString([]byte(payloadStr))
+
+	payloadSignatureB, err := signerPrivKey.Sign([]byte(payload))
+	if err != nil {
+		return "", "", err
+	}
+
+	authData := fmt.Sprintf(`{
+  "payload": "%s",
+  "signature": "%s"
+}`, payload, hex.EncodeToString(payloadSignatureB))
+
+	authDataB64 := base64.StdEncoding.EncodeToString([]byte(authData))
+
+	return authDataB64, pubKeyHex, nil
 }

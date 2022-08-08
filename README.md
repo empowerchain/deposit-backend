@@ -30,7 +30,7 @@ The following illustration documents the current data model and how the relation
 
 ## Usage documentation
 
-### 1. Admin
+### 1. SETUP: Admin
 Many of the setup functions are currently admin-only. This means you need to either seed
 the admin database with an admin public key or manually add it:
 ```shell
@@ -38,5 +38,20 @@ $ encore db shell admin
 admin=> insert into admin VALUES('YOURPUBKEYGOESHERE');
 ```
 
-### 2. Organization
+### 2. SETUP: Organization
 Schemes needs an organization, so create one using the `organization.CreateOrganization` API.
+
+### 3. Voucher Definition / Token Definition
+Schemes also need a reward definition id, so use for instance `deposit.CreateVoucherDefinition` API.
+
+### 4. SETUP: Scheme
+Create scheme with `scheme.CreateScheme`
+
+### 5. SETUP: Add collection point
+Add collection point(s) to the scheme with `scheme.AddCollectionPoint`
+
+### 6. Make deposit
+As the collection point, make a new deposit with `deposit.MakeDeposit`
+
+### 7. Optional: Claim
+If user pub key is not added in the initial deposit, the user needs to claim the deposit reward with: `deposit.Claim`

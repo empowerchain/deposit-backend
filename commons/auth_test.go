@@ -2,14 +2,11 @@ package commons
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/hex"
 	"encore.dev/beta/errs"
-	"fmt"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/stretchr/testify/require"
 	"testing"
-	"time"
 )
 
 var defaultSigner = secp256k1.GenPrivKey()
@@ -26,14 +23,14 @@ func TestAuthHandler(t *testing.T) {
 			name:          "Happy path",
 			signerPrivKey: defaultSigner,
 			pubKey:        defaultSigner.PubKey().(*secp256k1.PubKey),
-			client:        clientName,
+			client:        ClientName,
 			errorCode:     errs.OK,
 		},
 		{
 			name:          "Different private and public key",
 			signerPrivKey: secp256k1.GenPrivKey(),
 			pubKey:        defaultSigner.PubKey().(*secp256k1.PubKey),
-			client:        clientName,
+			client:        ClientName,
 			errorCode:     errs.Unauthenticated,
 		},
 		{
@@ -47,7 +44,7 @@ func TestAuthHandler(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			authDataB64, pubKeyHex, err := getToken(test.signerPrivKey, test.pubKey, test.client)
+			authDataB64, pubKeyHex, err := GetToken(test.signerPrivKey, test.pubKey, test.client)
 			require.NoError(t, err)
 			uid, err := AuthHandler(context.Background(), authDataB64)
 
@@ -70,37 +67,12 @@ func TestFromPrivateKey(t *testing.T) {
 	}
 	publicKey := privateKey.PubKey().(*secp256k1.PubKey)
 
-	token, pubKeyHex, err := getToken(privateKey, publicKey, clientName)
+	token, pubKeyHex, err := GetToken(privateKey, publicKey, ClientName)
 	require.NoError(t, err)
 
 	uid, err := AuthHandler(context.Background(), token)
 	require.NoError(t, err)
 	require.Equal(t, pubKeyHex, string(uid))
-}
-
-func getToken(signerPrivKey *secp256k1.PrivKey, pubKey *secp256k1.PubKey, client string) (string, string, error) {
-	pubKeyHex := hex.EncodeToString(pubKey.Bytes())
-
-	payloadStr := fmt.Sprintf(`{
-  "pubKey": "%s",
-  "client":"%s",
-  "timestamp":%d
-}`, pubKeyHex, client, time.Now().Unix())
-	payload := base64.StdEncoding.EncodeToString([]byte(payloadStr))
-
-	payloadSignatureB, err := signerPrivKey.Sign([]byte(payload))
-	if err != nil {
-		return "", "", err
-	}
-
-	authData := fmt.Sprintf(`{
-  "payload": "%s",
-  "signature": "%s"
-}`, payload, hex.EncodeToString(payloadSignatureB))
-
-	authDataB64 := base64.StdEncoding.EncodeToString([]byte(authData))
-
-	return authDataB64, pubKeyHex, nil
 }
 
 func TestFrontendCreatedAuth(t *testing.T) {
