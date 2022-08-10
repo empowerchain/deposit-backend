@@ -4,12 +4,20 @@ import (
 	"context"
 	"encoding/hex"
 	"encore.app/commons"
+	"encore.dev/beta/auth"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 )
 
+type AuthTestResponse struct {
+	pubKey string
+}
+
 //encore:api auth method=GET
-func AuthTest(_ context.Context) error {
-	return nil
+func AuthTest(_ context.Context) (*AuthTestResponse, error) {
+	pubKey, _ := auth.UserID()
+	return &AuthTestResponse{
+		pubKey: string(pubKey),
+	}, nil
 }
 
 //encore:api public method=GET
