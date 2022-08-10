@@ -9,14 +9,14 @@ import (
 )
 
 type AuthTestResponse struct {
-	pubKey string
+	PubKey string `json:"pubKey"`
 }
 
 //encore:api auth method=GET
 func AuthTest(_ context.Context) (*AuthTestResponse, error) {
 	pubKey, _ := auth.UserID()
 	return &AuthTestResponse{
-		pubKey: string(pubKey),
+		PubKey: string(pubKey),
 	}, nil
 }
 
