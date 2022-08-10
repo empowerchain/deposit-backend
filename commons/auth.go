@@ -29,17 +29,17 @@ type AuthPayload struct {
 func AuthHandler(_ context.Context, token string) (auth.UID, error) {
 	b, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
-		return "", errs.WrapCode(err, errs.Unauthenticated, "")
+		return "", errs.WrapCode(err, errs.Unauthenticated, "failed to decode token from base64")
 	}
 	var authData AuthData
 	if err := json.Unmarshal(b, &authData); err != nil {
-		return "", errs.WrapCode(err, errs.Unauthenticated, "")
+		return "", errs.WrapCode(err, errs.Unauthenticated, "failed to unmarshal token from JSON")
 	}
 
 	payloadb, err := base64.StdEncoding.DecodeString(authData.Payload)
 	var authPayload AuthPayload
 	if err := json.Unmarshal(payloadb, &authPayload); err != nil {
-		return "", errs.WrapCode(err, errs.Unauthenticated, "")
+		return "", errs.WrapCode(err, errs.Unauthenticated, "failed to decode payload from base64")
 	}
 
 	if authPayload.Client != ClientName {
@@ -50,18 +50,19 @@ func AuthHandler(_ context.Context, token string) (auth.UID, error) {
 
 	pk, err := hex.DecodeString(authPayload.PubKey)
 	if err != nil {
-		return "", errs.WrapCode(err, errs.Unauthenticated, "")
+		return "", errs.WrapCode(err, errs.Unauthenticated, "failed to decode pubKey from hex")
 	}
 	pubKey := secp256k1.PubKey{Key: pk}
 
 	sig, err := hex.DecodeString(authData.Signature)
 	if err != nil {
-		return "", errs.WrapCode(err, errs.Unauthenticated, "")
+		return "", errs.WrapCode(err, errs.Unauthenticated, "failed to decode signature from hex")
 	}
 
 	if ok := pubKey.VerifySignature([]byte(authData.Payload), sig); !ok {
 		return "", &errs.Error{
-			Code: errs.Unauthenticated,
+			Message: "failed to verify signature",
+			Code:    errs.Unauthenticated,
 		}
 	}
 
