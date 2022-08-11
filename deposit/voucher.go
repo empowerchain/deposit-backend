@@ -12,10 +12,10 @@ import (
 )
 
 type Voucher struct {
-	ID                  string
-	VoucherDefinitionID string
-	OwnerPubKey         string
-	Invalidated         bool
+	ID                  string `json:"id"`
+	VoucherDefinitionID string `json:"voucherDefinitionID"`
+	OwnerPubKey         string `json:"ownerPubKey"`
+	Invalidated         bool   `json:"invalidated"`
 }
 
 func mintVoucher(ctx context.Context, tx *sqldb.Tx, voucherDef *Definition, ownerPubKey string) (string, error) {
@@ -54,7 +54,7 @@ func GetVoucher(ctx context.Context, params *GetVoucherParams) (*Voucher, error)
 }
 
 type GetAllVouchersResponse struct {
-	Vouchers []Voucher
+	Vouchers []Voucher `json:"vouchers"`
 }
 
 //encore:api auth method=POST
@@ -84,7 +84,7 @@ type GetVouchersForUserParams struct {
 }
 
 type GetVouchersForUserResponse struct {
-	Vouchers []Voucher
+	Vouchers []Voucher `json:"vouchers"`
 }
 
 //encore:api auth method=POST

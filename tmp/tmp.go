@@ -26,9 +26,9 @@ func StatusTest(_ context.Context) error {
 }
 
 type GenerateKeyResponse struct {
-	PublicKey  string
-	PrivateKey string
-	Token      string
+	PublicKey  string `json:"publicKey"`
+	PrivateKey string `json:"privateKey"`
+	Token      string `json:"token"`
 }
 
 //encore:api public method=GET

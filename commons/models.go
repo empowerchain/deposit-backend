@@ -13,8 +13,8 @@ const (
 )
 
 type ItemDefinition struct {
-	MaterialDefinition map[string]string
-	Magnitude          MagnitudeType
+	MaterialDefinition map[string]string `json:"materialDefinition"`
+	Magnitude          MagnitudeType     `json:"magnitude"`
 }
 
 func (id ItemDefinition) SameAs(diff ItemDefinition) bool {
@@ -22,8 +22,8 @@ func (id ItemDefinition) SameAs(diff ItemDefinition) bool {
 }
 
 type MassBalance struct {
-	ItemDefinition ItemDefinition
-	Amount         float64
+	ItemDefinition ItemDefinition `json:"itemDefinition"`
+	Amount         float64        `json:"amount"`
 }
 
 type RewardType int
@@ -34,16 +34,16 @@ const (
 )
 
 type RewardDefinition struct {
-	ItemDefinition ItemDefinition
-	RewardType     RewardType
-	RewardTypeID   string
-	PerItem        float64
+	ItemDefinition ItemDefinition `json:"itemDefinition"`
+	RewardType     RewardType     `json:"rewardType"`
+	RewardTypeID   string         `json:"rewardTypeID"`
+	PerItem        float64        `json:"perItem"`
 }
 
 type Reward struct {
-	Type   RewardType
-	TypeID string
-	Amount float64
+	Type   RewardType `json:"type"`
+	TypeID string     `json:"typeID"`
+	Amount float64    `json:"amount"`
 }
 
 func (rd RewardDefinition) GetRewardsFor(deposit MassBalance) Reward {

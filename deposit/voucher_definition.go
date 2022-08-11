@@ -11,10 +11,10 @@ import (
 )
 
 type Definition struct {
-	ID             string
-	OrganizationID string
-	Name           string
-	PictureURL     string
+	ID             string `json:"id"`
+	OrganizationID string `json:"organizationID"`
+	Name           string `json:"name"`
+	PictureURL     string `json:"pictureURL"`
 }
 
 type CreateVoucherDefinitionParams struct {
@@ -71,7 +71,7 @@ func GetVoucherDefinition(ctx context.Context, params *GetVoucherDefinitionParam
 }
 
 type GetAllVoucherDefinitionsResponse struct {
-	VoucherDefinitions []Definition
+	VoucherDefinitions []Definition `json:"voucherDefinitions"`
 }
 
 //encore:api auth method=POST

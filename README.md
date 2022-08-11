@@ -12,6 +12,8 @@ Test: `encore test ./... -p 1 -count=1`
 
 Run locally: `encore run`
 
+Generate new client code: `encore gen client deposit-pqu2 --env=staging --lang typescript --output client.ts`
+
 ## Auth
 
 Auth is documented under [commons/auth.md](commons/auth.md).
@@ -34,7 +36,7 @@ The following illustration documents the current data model and how the relation
 Many of the setup functions are currently admin-only. This means you need to either seed
 the admin database with an admin public key or manually add it:
 ```shell
-$ encore db shell admin
+$ encore db shell admin --env staging # Example env
 admin=> insert into admin VALUES('YOURPUBKEYGOESHERE');
 ```
 

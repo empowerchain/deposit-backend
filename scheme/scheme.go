@@ -13,18 +13,18 @@ import (
 )
 
 type Scheme struct {
-	ID                string
-	Name              string
-	CreatedAt         time.Time
-	CollectionPoints  []string
-	RewardDefinitions []commons.RewardDefinition
-	OrganizationID    string
+	ID                string                     `json:"id"`
+	Name              string                     `json:"name"`
+	CreatedAt         time.Time                  `json:"createdAt"`
+	CollectionPoints  []string                   `json:"collectionPoints"`
+	RewardDefinitions []commons.RewardDefinition `json:"rewardDefinitions"`
+	OrganizationID    string                     `json:"organizationID"`
 }
 
 type CreateSchemeParams struct {
-	Name              string `json:"name" validate:"required"`
-	OrganizationID    string `json:"organizationID" validate:"required"`
-	RewardDefinitions []commons.RewardDefinition
+	Name              string                     `json:"name" validate:"required"`
+	OrganizationID    string                     `json:"organizationID" validate:"required"`
+	RewardDefinitions []commons.RewardDefinition `json:"rewardDefinitions" validate:"required"`
 }
 
 //encore:api auth method=POST
@@ -57,7 +57,7 @@ func CreateScheme(ctx context.Context, params *CreateSchemeParams) (*Scheme, err
 }
 
 type GetSchemeParams struct {
-	SchemeID string
+	SchemeID string `json:"schemeID"`
 }
 
 //encore:api auth method=POST

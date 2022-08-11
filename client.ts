@@ -385,6 +385,10 @@ export namespace scheme {
 }
 
 export namespace tmp {
+    export interface AuthTestResponse {
+        pubKey: string
+    }
+
     export interface GenerateKeyResponse {
         PublicKey: string
         PrivateKey: string
@@ -398,8 +402,10 @@ export namespace tmp {
             this.baseClient = baseClient
         }
 
-        public async AuthTest(): Promise<void> {
-            await this.baseClient.callAPI("GET", `/tmp.AuthTest`)
+        public async AuthTest(): Promise<AuthTestResponse> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callAPI("GET", `/tmp.AuthTest`)
+            return await resp.json() as AuthTestResponse
         }
 
         public async GenerateKey(): Promise<GenerateKeyResponse> {

@@ -12,9 +12,9 @@ import (
 )
 
 type Organization struct {
-	ID     string
-	Name   string
-	PubKey string
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	PubKey string `json:"pubKey"`
 }
 
 type CreateOrgParams struct {
@@ -102,7 +102,7 @@ func AuthorizeCallerForOrg(ctx context.Context, params *AuthorizeCallerForOrgPar
 }
 
 type GetAllOrganizationsResponse struct {
-	Organizations []Organization
+	Organizations []Organization `json:"organizations"`
 }
 
 //encore:api auth method=POST

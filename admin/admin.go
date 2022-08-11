@@ -20,7 +20,7 @@ type IsAdminParams struct {
 }
 
 type IsAdminResponse struct {
-	IsAdmin bool
+	IsAdmin bool `json:"isAdmin"`
 }
 
 //encore:api private method=POST

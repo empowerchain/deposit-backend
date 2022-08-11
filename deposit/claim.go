@@ -16,7 +16,7 @@ type ClaimParams struct {
 }
 
 type ClaimResponse struct {
-	Rewards []commons.Reward
+	Rewards []commons.Reward `json:"rewards"`
 }
 
 //encore:api auth method=POST

@@ -14,14 +14,14 @@ import (
 )
 
 type Deposit struct {
-	ID                    string
-	SchemeID              string
-	CollectionPointPubKey string
-	UserPubKey            string
-	ExternalRef           string
-	CreatedAt             time.Time
-	MassBalanceDeposits   []commons.MassBalance
-	Claimed               bool
+	ID                    string                `json:"id"`
+	SchemeID              string                `json:"schemeID"`
+	CollectionPointPubKey string                `json:"collectionPointPubKey"`
+	UserPubKey            string                `json:"userPubKey"`
+	ExternalRef           string                `json:"externalRef"`
+	CreatedAt             time.Time             `json:"createdAt"`
+	MassBalanceDeposits   []commons.MassBalance `json:"massBalanceDeposits"`
+	Claimed               bool                  `json:"claimed"`
 }
 
 type MakeDepositParams struct {
@@ -164,7 +164,7 @@ func GetDepositByExternalRef(ctx context.Context, params *GetDepositByExternalRe
 }
 
 type GetAllDepositsResponse struct {
-	Deposits []Deposit
+	Deposits []Deposit `json:"deposits"`
 }
 
 //encore:api auth method=POST
