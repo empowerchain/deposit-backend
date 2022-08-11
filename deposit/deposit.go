@@ -73,6 +73,40 @@ func MakeDeposit(ctx context.Context, params *MakeDepositParams) (*Deposit, erro
 		}
 	}
 
+	if params.ExternalRef != "" {
+		existingDeposit, _ := GetDepositByExternalRef(ctx, &GetDepositByExternalRefParams{
+			CollectionPointPubKey: string(collectionPoint),
+			ExternalRef:           params.ExternalRef,
+		})
+
+		if existingDeposit != nil {
+			if len(existingDeposit.MassBalanceDeposits) != len(params.MassBalanceDeposits) {
+				return nil, &errs.Error{
+					Code:    errs.InvalidArgument,
+					Message: "externalRef already exists, but different deposit was made",
+				}
+			}
+
+			for i := range existingDeposit.MassBalanceDeposits {
+				if !existingDeposit.MassBalanceDeposits[i].ItemDefinition.SameAs(params.MassBalanceDeposits[i].ItemDefinition) {
+					return nil, &errs.Error{
+						Code:    errs.InvalidArgument,
+						Message: "externalRef already exists, but different deposit was made",
+					}
+				}
+
+				if existingDeposit.MassBalanceDeposits[i].Amount != params.MassBalanceDeposits[i].Amount {
+					return nil, &errs.Error{
+						Code:    errs.InvalidArgument,
+						Message: "externalRef already exists, but different deposit was made",
+					}
+				}
+			}
+
+			return existingDeposit, nil
+		}
+	}
+
 	deposit := Deposit{
 		ID:                    commons.GenerateID(),
 		SchemeID:              params.SchemeID,

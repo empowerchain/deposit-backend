@@ -29,6 +29,15 @@ var (
 		RewardTypeID: "",
 		PerItem:      1,
 	}
+	otherTestRewards = commons.RewardDefinition{
+		ItemDefinition: commons.ItemDefinition{
+			MaterialDefinition: map[string]string{"materialType": "LDPE"},
+			Magnitude:          commons.Weight,
+		},
+		RewardType:   commons.Voucher,
+		RewardTypeID: "",
+		PerItem:      1.1,
+	}
 	defaultTestDeposit = []commons.MassBalance{
 		{
 			ItemDefinition: defaultTestRewards.ItemDefinition,
@@ -202,6 +211,86 @@ func TestMakeDeposit(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMakeDepositWithSameExternalRef(t *testing.T) {
+	require.NoError(t, admin.InsertTestData(context.Background()))
+	testutils.ClearAllDBs()
+
+	organizationPubKey, _ := testutils.GenerateKeys()
+	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
+		ID:     testOrganizationId,
+		Name:   testOrganizationId,
+		PubKey: organizationPubKey,
+	})
+	require.NoError(t, err)
+
+	definition, err := CreateVoucherDefinition(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &CreateVoucherDefinitionParams{
+		OrganizationID: testOrganizationId,
+		Name:           "Voucher def name",
+		PictureURL:     "https://does.not.matter.com",
+	})
+	require.NoError(t, err)
+	defaultTestRewards.RewardTypeID = definition.ID
+
+	collectionPointPubKey, _ := testutils.GenerateKeys()
+	testScheme, err := scheme.CreateScheme(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &scheme.CreateSchemeParams{
+		Name: "TestScheme",
+		RewardDefinitions: []commons.RewardDefinition{
+			defaultTestRewards,
+			otherTestRewards,
+		},
+		OrganizationID: testOrganizationId,
+	})
+	require.NoError(t, err)
+
+	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(organizationPubKey), &scheme.AddCollectionPointParams{
+		SchemeID:              testScheme.ID,
+		CollectionPointPubKey: collectionPointPubKey,
+	})
+	require.NoError(t, err)
+
+	ctx := testutils.GetAuthenticatedContext(collectionPointPubKey)
+	externalRef := "62f50671578ec50fe36176ee"
+	firstDeposit, err := MakeDeposit(ctx, &MakeDepositParams{
+		SchemeID:            testScheme.ID,
+		MassBalanceDeposits: defaultTestDeposit,
+		ExternalRef:         externalRef,
+	})
+	require.NoError(t, err)
+
+	secondDeposit, err := MakeDeposit(ctx, &MakeDepositParams{
+		SchemeID:            testScheme.ID,
+		MassBalanceDeposits: defaultTestDeposit,
+		ExternalRef:         externalRef,
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, firstDeposit.ID, secondDeposit.ID)
+
+	_, err = MakeDeposit(ctx, &MakeDepositParams{
+		SchemeID: testScheme.ID,
+		MassBalanceDeposits: []commons.MassBalance{
+			{
+				ItemDefinition: otherTestRewards.ItemDefinition,
+				Amount:         defaultTestDeposit[0].Amount,
+			},
+		},
+		ExternalRef: externalRef,
+	})
+	require.Error(t, err)
+
+	_, err = MakeDeposit(ctx, &MakeDepositParams{
+		SchemeID: testScheme.ID,
+		MassBalanceDeposits: []commons.MassBalance{
+			{
+				ItemDefinition: defaultTestDeposit[0].ItemDefinition,
+				Amount:         42.42,
+			},
+		},
+		ExternalRef: externalRef,
+	})
+	require.Error(t, err)
 }
 
 func TestGetDeposit(t *testing.T) {
