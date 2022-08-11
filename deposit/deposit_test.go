@@ -91,6 +91,25 @@ func TestMakeDeposit(t *testing.T) {
 			uid:       collectionPointPubKey,
 		},
 		{
+			name: "Happy path without user",
+			params: MakeDepositParams{
+				SchemeID:            testScheme.ID,
+				MassBalanceDeposits: defaultTestDeposit,
+			},
+			errorCode: errs.OK,
+			uid:       collectionPointPubKey,
+		},
+		{
+			name: "Happy path with external ref",
+			params: MakeDepositParams{
+				SchemeID:            testScheme.ID,
+				MassBalanceDeposits: defaultTestDeposit,
+				ExternalRef:         "62f50671578ec50fe36176ee",
+			},
+			errorCode: errs.OK,
+			uid:       collectionPointPubKey,
+		},
+		{
 			name: "Missing items",
 			params: MakeDepositParams{
 				SchemeID:   testScheme.ID,
@@ -150,6 +169,8 @@ func TestMakeDeposit(t *testing.T) {
 
 	for _, test := range testTable {
 		t.Run(test.name, func(t *testing.T) {
+			require.NoError(t, testutils.ClearDB(depositDB, "deposit"))
+
 			ctx := testutils.GetAuthenticatedContext(test.uid)
 
 			deposit, err := MakeDeposit(ctx, &test.params)
@@ -168,6 +189,7 @@ func TestMakeDeposit(t *testing.T) {
 				require.Equal(t, test.params.SchemeID, dbDeposit.SchemeID)
 				require.Equal(t, test.params.UserPubKey, dbDeposit.UserPubKey)
 				require.Equal(t, test.params.MassBalanceDeposits, dbDeposit.MassBalanceDeposits)
+				require.Equal(t, test.params.ExternalRef, dbDeposit.ExternalRef)
 				shouldBeClaimed := dbDeposit.UserPubKey != ""
 				require.Equal(t, shouldBeClaimed, dbDeposit.Claimed)
 			} else {
@@ -178,8 +200,6 @@ func TestMakeDeposit(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, 0, len(getAllResp.Deposits))
 			}
-
-			require.NoError(t, testutils.ClearDB(depositDB, "deposit"))
 		})
 	}
 }

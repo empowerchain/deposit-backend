@@ -336,6 +336,11 @@ export namespace scheme {
         rewardDefinitions: commons.RewardDefinition[]
     }
 
+    export interface EditSchemeParams {
+        schemeID: string
+        rewardDefinitions: commons.RewardDefinition[]
+    }
+
     export interface GetAllSchemesResponse {
         schemes: Scheme[]
     }
@@ -368,6 +373,10 @@ export namespace scheme {
             // Now make the actual call to the API
             const resp = await this.baseClient.callAPI("POST", `/scheme.CreateScheme`, JSON.stringify(params))
             return await resp.json() as Scheme
+        }
+
+        public async EditScheme(params: EditSchemeParams): Promise<void> {
+            await this.baseClient.callAPI("PUT", `/scheme.EditScheme`, JSON.stringify(params))
         }
 
         public async GetAllSchemes(): Promise<GetAllSchemesResponse> {

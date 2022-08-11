@@ -121,7 +121,7 @@ func GetDeposit(ctx context.Context, params *GetDepositParams) (*Deposit, error)
 
 	var d Deposit
 	var massBalanceJson string
-	if err := sqldb.QueryRow(ctx, "SELECT id, scheme_id, collection_point_pub_key, user_pub_key, mass_balance_deposits, claimed, created_at FROM deposit WHERE id=$1", params.DepositID).Scan(&d.ID, &d.SchemeID, &d.CollectionPointPubKey, &d.UserPubKey, &massBalanceJson, &d.Claimed, &d.CreatedAt); err != nil {
+	if err := sqldb.QueryRow(ctx, "SELECT id, scheme_id, collection_point_pub_key, user_pub_key, mass_balance_deposits, claimed, created_at, external_ref FROM deposit WHERE id=$1", params.DepositID).Scan(&d.ID, &d.SchemeID, &d.CollectionPointPubKey, &d.UserPubKey, &massBalanceJson, &d.Claimed, &d.CreatedAt, &d.ExternalRef); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &errs.Error{
 				Code: errs.NotFound,
