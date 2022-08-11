@@ -67,7 +67,8 @@ func MakeDeposit(ctx context.Context, params *MakeDepositParams) (*Deposit, erro
 
 		if !depositIsAllowed {
 			return nil, &errs.Error{
-				Code: errs.InvalidArgument,
+				Code:    errs.InvalidArgument,
+				Message: "no reward definition found for the deposit",
 			}
 		}
 	}

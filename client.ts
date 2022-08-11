@@ -81,28 +81,28 @@ export interface ClientOptions {
 
 export namespace commons {
     export interface ItemDefinition {
-        MaterialDefinition: { [key: string]: string }
-        Magnitude: MagnitudeType
+        materialDefinition: { [key: string]: string }
+        magnitude: MagnitudeType
     }
 
     export type MagnitudeType = number
 
     export interface MassBalance {
-        ItemDefinition: ItemDefinition
-        Amount: number
+        itemDefinition: ItemDefinition
+        amount: number
     }
 
     export interface Reward {
-        Type: RewardType
-        TypeID: string
-        Amount: number
+        type: RewardType
+        typeID: string
+        amount: number
     }
 
     export interface RewardDefinition {
-        ItemDefinition: ItemDefinition
-        RewardType: RewardType
-        RewardTypeID: string
-        PerItem: number
+        itemDefinition: ItemDefinition
+        rewardType: RewardType
+        rewardTypeID: string
+        perItem: number
     }
 
     export type RewardType = number
@@ -115,7 +115,7 @@ export namespace deposit {
     }
 
     export interface ClaimResponse {
-        Rewards: commons.Reward[]
+        rewards: commons.Reward[]
     }
 
     export interface CreateVoucherDefinitionParams {
@@ -125,33 +125,33 @@ export namespace deposit {
     }
 
     export interface Definition {
-        ID: string
-        OrganizationID: string
-        Name: string
-        PictureURL: string
+        id: string
+        organizationID: string
+        name: string
+        pictureURL: string
     }
 
     export interface Deposit {
-        ID: string
-        SchemeID: string
-        CollectionPointPubKey: string
-        UserPubKey: string
-        ExternalRef: string
-        CreatedAt: string
-        MassBalanceDeposits: commons.MassBalance[]
-        Claimed: boolean
+        id: string
+        schemeID: string
+        collectionPointPubKey: string
+        userPubKey: string
+        externalRef: string
+        createdAt: string
+        massBalanceDeposits: commons.MassBalance[]
+        claimed: boolean
     }
 
     export interface GetAllDepositsResponse {
-        Deposits: Deposit[]
+        deposits: Deposit[]
     }
 
     export interface GetAllVoucherDefinitionsResponse {
-        VoucherDefinitions: Definition[]
+        voucherDefinitions: Definition[]
     }
 
     export interface GetAllVouchersResponse {
-        Vouchers: Voucher[]
+        vouchers: Voucher[]
     }
 
     export interface GetDepositByExternalRefParams {
@@ -176,7 +176,7 @@ export namespace deposit {
     }
 
     export interface GetVouchersForUserResponse {
-        Vouchers: Voucher[]
+        vouchers: Voucher[]
     }
 
     export interface InvalidateVoucherParams {
@@ -191,10 +191,10 @@ export namespace deposit {
     }
 
     export interface Voucher {
-        ID: string
-        VoucherDefinitionID: string
-        OwnerPubKey: string
-        Invalidated: boolean
+        id: string
+        voucherDefinitionID: string
+        ownerPubKey: string
+        invalidated: boolean
     }
 
     export class ServiceClient {
@@ -284,7 +284,7 @@ export namespace organization {
     }
 
     export interface GetAllOrganizationsResponse {
-        Organizations: Organization[]
+        organizations: Organization[]
     }
 
     export interface GetOrganizationParams {
@@ -292,9 +292,9 @@ export namespace organization {
     }
 
     export interface Organization {
-        ID: string
-        Name: string
-        PubKey: string
+        id: string
+        name: string
+        pubKey: string
     }
 
     export class ServiceClient {
@@ -333,7 +333,7 @@ export namespace scheme {
     export interface CreateSchemeParams {
         name: string
         organizationID: string
-        RewardDefinitions: commons.RewardDefinition[]
+        rewardDefinitions: commons.RewardDefinition[]
     }
 
     export interface GetAllSchemesResponse {
@@ -341,16 +341,16 @@ export namespace scheme {
     }
 
     export interface GetSchemeParams {
-        SchemeID: string
+        schemeID: string
     }
 
     export interface Scheme {
-        ID: string
-        Name: string
-        CreatedAt: string
-        CollectionPoints: string[]
-        RewardDefinitions: commons.RewardDefinition[]
-        OrganizationID: string
+        id: string
+        name: string
+        createdAt: string
+        collectionPoints: string[]
+        rewardDefinitions: commons.RewardDefinition[]
+        organizationID: string
     }
 
     export class ServiceClient {
@@ -390,9 +390,9 @@ export namespace tmp {
     }
 
     export interface GenerateKeyResponse {
-        PublicKey: string
-        PrivateKey: string
-        Token: string
+        publicKey: string
+        privateKey: string
+        token: string
     }
 
     export class ServiceClient {

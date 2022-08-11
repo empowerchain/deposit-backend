@@ -56,6 +56,46 @@ func CreateScheme(ctx context.Context, params *CreateSchemeParams) (*Scheme, err
 	})
 }
 
+type EditSchemeParams struct {
+	SchemeID          string                     `json:"schemeID"`
+	RewardDefinitions []commons.RewardDefinition `json:"rewardDefinitions"`
+}
+
+//encore:api auth method=PUT
+func EditScheme(ctx context.Context, params *EditSchemeParams) error {
+	if err := commons.Validate(params); err != nil {
+		return err
+	}
+
+	scheme, err := GetScheme(ctx, &GetSchemeParams{
+		SchemeID: params.SchemeID,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := organization.AuthorizeCallerForOrg(ctx, &organization.AuthorizeCallerForOrgParams{OrganizationID: scheme.OrganizationID}); err != nil {
+		return err
+	}
+
+	if len(params.RewardDefinitions) > 0 {
+		scheme.RewardDefinitions = params.RewardDefinitions
+	}
+
+	jsonb, err := json.Marshal(scheme.RewardDefinitions)
+	if err != nil {
+		return err
+	}
+
+	_, err = sqldb.Exec(ctx, `
+        UPDATE scheme
+		SET reward_definitions = $2
+		WHERE id=$1
+    `, scheme.ID, string(jsonb))
+
+	return nil
+}
+
 type GetSchemeParams struct {
 	SchemeID string `json:"schemeID"`
 }

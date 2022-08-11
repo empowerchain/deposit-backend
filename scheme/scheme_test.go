@@ -219,3 +219,48 @@ func TestAddCollectionPoint(t *testing.T) {
 		})
 	}
 }
+
+func TestEditScheme(t *testing.T) {
+	testutils.ClearAllDBs()
+	require.NoError(t, admin.InsertTestData(context.Background()))
+
+	organizationPubKey, _ := testutils.GenerateKeys()
+	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
+		ID:     testOrganizationId,
+		Name:   testOrganizationId,
+		PubKey: organizationPubKey,
+	})
+	require.NoError(t, err)
+
+	scheme, err := CreateScheme(testutils.GetAuthenticatedContext(organizationPubKey), &CreateSchemeParams{
+		Name:              "SchemeName",
+		OrganizationID:    testOrganizationId,
+		RewardDefinitions: defaultTestRewards,
+	})
+	require.NoError(t, err)
+
+	newRewardDef := commons.RewardDefinition{
+		ItemDefinition: commons.ItemDefinition{
+			MaterialDefinition: map[string]string{"plasticType": "LDPE"},
+			Magnitude:          commons.Weight,
+		},
+		RewardType:   commons.Voucher,
+		RewardTypeID: "whatever2",
+		PerItem:      1.5,
+	}
+	err = EditScheme(testutils.GetAuthenticatedContext(organizationPubKey), &EditSchemeParams{
+		SchemeID: scheme.ID,
+		RewardDefinitions: []commons.RewardDefinition{
+			newRewardDef,
+		},
+	})
+	require.NoError(t, err)
+
+	dbScheme, err := GetScheme(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetSchemeParams{SchemeID: scheme.ID})
+	require.NoError(t, err)
+	require.Equal(t, 1, len(dbScheme.RewardDefinitions))
+	require.True(t, newRewardDef.ItemDefinition.SameAs(dbScheme.RewardDefinitions[0].ItemDefinition))
+	require.Equal(t, newRewardDef.RewardType, dbScheme.RewardDefinitions[0].RewardType)
+	require.Equal(t, newRewardDef.RewardTypeID, dbScheme.RewardDefinitions[0].RewardTypeID)
+	require.Equal(t, newRewardDef.PerItem, dbScheme.RewardDefinitions[0].PerItem)
+}
