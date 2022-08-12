@@ -70,6 +70,35 @@ func GetVoucherDefinition(ctx context.Context, params *GetVoucherDefinitionParam
 	return &vd, nil
 }
 
+type EditVoucherDefinitionParams struct {
+	VoucherDefinitionID string `json:"voucherDefinitionID" validate:"required"`
+	Name                string `json:"name" validate:"required"`
+	PictureURL          string `json:"pictureURL" validate:"required"`
+}
+
+//encore:api auth method=POST
+func EditVoucherDefinition(ctx context.Context, params *EditVoucherDefinitionParams) error {
+	if err := commons.Validate(params); err != nil {
+		return err
+	}
+
+	vd, err := GetVoucherDefinition(ctx, &GetVoucherDefinitionParams{VoucherDefinitionID: params.VoucherDefinitionID})
+	if err != nil {
+		return err
+	}
+
+	vd.Name = params.Name
+	vd.PictureURL = params.PictureURL
+
+	_, err = sqldb.Exec(ctx, `
+        UPDATE voucher_definition
+		SET name = $2, picture_url = $3
+		WHERE id=$1
+    `, vd.ID, vd.Name, vd.PictureURL)
+
+	return err
+}
+
 type GetAllVoucherDefinitionsParams struct {
 	OrganizationID string `json:"organizationID"`
 }

@@ -141,3 +141,41 @@ func TestGetAllVoucherDefinitions(t *testing.T) {
 		require.NotEqual(t, "", voucherDefinition.ID)
 	}
 }
+
+func TestEditVoucherDefinition(t *testing.T) {
+	testutils.ClearAllDBs()
+	require.NoError(t, admin.InsertTestData(context.Background()))
+
+	voucherName := "My voucher name"
+	pictureURL := "https://something.co/pop.png"
+
+	require.NoError(t, admin.InsertTestData(context.Background()))
+	organizationPubKey, _ := testutils.GenerateKeys()
+	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
+		ID:     testOrganizationId,
+		Name:   testOrganizationId,
+		PubKey: organizationPubKey,
+	})
+
+	vd, err := CreateVoucherDefinition(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &CreateVoucherDefinitionParams{
+		Name:           voucherName,
+		OrganizationID: testOrganizationId,
+		PictureURL:     pictureURL,
+	})
+	require.NoError(t, err)
+
+	newName := "MY NewName is so cool"
+	newPictureURL := "https://mypicture.horse.com/coolhorse.jpeg"
+	err = EditVoucherDefinition(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &EditVoucherDefinitionParams{
+		VoucherDefinitionID: vd.ID,
+		Name:                newName,
+		PictureURL:          newPictureURL,
+	})
+	require.NoError(t, err)
+
+	vdAfterEdit, err := GetVoucherDefinition(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetVoucherDefinitionParams{
+		VoucherDefinitionID: vd.ID,
+	})
+	require.Equal(t, newName, vdAfterEdit.Name)
+	require.Equal(t, newPictureURL, vdAfterEdit.PictureURL)
+}

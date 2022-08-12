@@ -135,6 +135,12 @@ export namespace deposit {
         claimed: boolean
     }
 
+    export interface EditVoucherDefinitionParams {
+        voucherDefinitionID: string
+        name: string
+        pictureURL: string
+    }
+
     export interface GetAllDepositsResponse {
         deposits: Deposit[]
     }
@@ -226,6 +232,10 @@ export namespace deposit {
             // Now make the actual call to the API
             const resp = await this.baseClient.callAPI("POST", `/deposit.CreateVoucherDefinition`, JSON.stringify(params))
             return await resp.json() as VoucherDefinition
+        }
+
+        public async EditVoucherDefinition(params: EditVoucherDefinitionParams): Promise<void> {
+            await this.baseClient.callAPI("POST", `/deposit.EditVoucherDefinition`, JSON.stringify(params))
         }
 
         public async GetAllDeposits(): Promise<GetAllDepositsResponse> {
@@ -354,6 +364,7 @@ export namespace scheme {
     export interface EditSchemeParams {
         schemeID: string
         rewardDefinitions: commons.RewardDefinition[]
+        collectionPoints: string[]
     }
 
     export interface GetAllSchemesParams {

@@ -57,8 +57,9 @@ func CreateScheme(ctx context.Context, params *CreateSchemeParams) (*Scheme, err
 }
 
 type EditSchemeParams struct {
-	SchemeID          string                     `json:"schemeID"`
-	RewardDefinitions []commons.RewardDefinition `json:"rewardDefinitions"`
+	SchemeID          string                     `json:"schemeID" validate:"required"`
+	RewardDefinitions []commons.RewardDefinition `json:"rewardDefinitions" validate:"required"`
+	CollectionPoints  []string                   `json:"collectionPoints" validate:"required"`
 }
 
 //encore:api auth method=PUT
@@ -78,9 +79,8 @@ func EditScheme(ctx context.Context, params *EditSchemeParams) error {
 		return err
 	}
 
-	if len(params.RewardDefinitions) > 0 {
-		scheme.RewardDefinitions = params.RewardDefinitions
-	}
+	scheme.RewardDefinitions = params.RewardDefinitions
+	scheme.CollectionPoints = params.CollectionPoints
 
 	jsonb, err := json.Marshal(scheme.RewardDefinitions)
 	if err != nil {
@@ -89,9 +89,9 @@ func EditScheme(ctx context.Context, params *EditSchemeParams) error {
 
 	_, err = sqldb.Exec(ctx, `
         UPDATE scheme
-		SET reward_definitions = $2
+		SET reward_definitions = $2, collection_points = $3
 		WHERE id=$1
-    `, scheme.ID, string(jsonb))
+    `, scheme.ID, string(jsonb), scheme.CollectionPoints)
 
 	return nil
 }

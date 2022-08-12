@@ -248,10 +248,17 @@ func TestEditScheme(t *testing.T) {
 		RewardTypeID: "whatever2",
 		PerItem:      1.5,
 	}
+
+	collectionPoint1, _ := testutils.GenerateKeys()
+	collectionPoint2, _ := testutils.GenerateKeys()
 	err = EditScheme(testutils.GetAuthenticatedContext(organizationPubKey), &EditSchemeParams{
 		SchemeID: scheme.ID,
 		RewardDefinitions: []commons.RewardDefinition{
 			newRewardDef,
+		},
+		CollectionPoints: []string{
+			collectionPoint1,
+			collectionPoint2,
 		},
 	})
 	require.NoError(t, err)
@@ -263,4 +270,7 @@ func TestEditScheme(t *testing.T) {
 	require.Equal(t, newRewardDef.RewardType, dbScheme.RewardDefinitions[0].RewardType)
 	require.Equal(t, newRewardDef.RewardTypeID, dbScheme.RewardDefinitions[0].RewardTypeID)
 	require.Equal(t, newRewardDef.PerItem, dbScheme.RewardDefinitions[0].PerItem)
+	require.Equal(t, 2, len(dbScheme.CollectionPoints))
+	require.Equal(t, collectionPoint1, dbScheme.CollectionPoints[0])
+	require.Equal(t, collectionPoint2, dbScheme.CollectionPoints[1])
 }
