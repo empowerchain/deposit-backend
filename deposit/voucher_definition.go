@@ -76,6 +76,7 @@ type EditVoucherDefinitionParams struct {
 	PictureURL          string `json:"pictureURL" validate:"required"`
 }
 
+// TODO: TEST AUTH
 //encore:api auth method=POST
 func EditVoucherDefinition(ctx context.Context, params *EditVoucherDefinitionParams) error {
 	if err := commons.Validate(params); err != nil {
@@ -84,6 +85,10 @@ func EditVoucherDefinition(ctx context.Context, params *EditVoucherDefinitionPar
 
 	vd, err := GetVoucherDefinition(ctx, &GetVoucherDefinitionParams{VoucherDefinitionID: params.VoucherDefinitionID})
 	if err != nil {
+		return err
+	}
+
+	if err := organization.AuthorizeCallerForOrg(ctx, &organization.AuthorizeCallerForOrgParams{OrganizationID: vd.OrganizationID}); err != nil {
 		return err
 	}
 
