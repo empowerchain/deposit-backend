@@ -50,7 +50,7 @@ func CreateOrganization(ctx context.Context, params *CreateOrgParams) (*Organiza
 }
 
 type GetOrganizationParams struct {
-	ID string `json:"ID" validate:"required"`
+	ID string `json:"id" validate:"required"`
 }
 
 //encore:api public method=POST

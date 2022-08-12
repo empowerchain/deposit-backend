@@ -288,7 +288,7 @@ export namespace organization {
     }
 
     export interface GetOrganizationParams {
-        ID: string
+        id: string
     }
 
     export interface Organization {
