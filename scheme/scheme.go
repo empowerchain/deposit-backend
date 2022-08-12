@@ -124,16 +124,25 @@ func GetScheme(ctx context.Context, params *GetSchemeParams) (*Scheme, error) {
 	return &s, nil
 }
 
+type GetAllSchemesParams struct {
+	OrganizationID string `json:"organizationID"`
+}
+
 type GetAllSchemesResponse struct {
 	Schemes []Scheme `json:"schemes"`
 }
 
+// TODO: WRITE TESTS FOR SEARCH PARAMS
 //encore:api public method=POST
-func GetAllSchemes(_ context.Context) (resp *GetAllSchemesResponse, err error) {
+func GetAllSchemes(ctx context.Context, params *GetAllSchemesParams) (resp *GetAllSchemesResponse, err error) {
 	resp = &GetAllSchemesResponse{}
-	rows, err := sqldb.Query(context.Background(), `
-        SELECT id FROM scheme
-    `)
+
+	var rows *sqldb.Rows
+	if params.OrganizationID == "" {
+		rows, err = sqldb.Query(ctx, `SELECT id FROM scheme`)
+	} else {
+		rows, err = sqldb.Query(ctx, `SELECT id FROM scheme WHERE organization_id=$1`, params.OrganizationID)
+	}
 	if err != nil {
 		return nil, err
 	}

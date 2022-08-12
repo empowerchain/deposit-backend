@@ -111,7 +111,7 @@ func TestCreateScheme(t *testing.T) {
 				require.NoError(t, err)
 				require.NotEqual(t, "", resp.ID)
 
-				getAllResp, err := GetAllSchemes(testutils.GetAuthenticatedContext(""))
+				getAllResp, err := GetAllSchemes(testutils.GetAuthenticatedContext(""), &GetAllSchemesParams{})
 				require.NoError(t, err)
 				require.Equal(t, 1, len(getAllResp.Schemes))
 
@@ -126,7 +126,7 @@ func TestCreateScheme(t *testing.T) {
 				require.Error(t, err)
 				require.Equal(t, test.errorCode, err.(*errs.Error).Code)
 
-				getAllResp, err := GetAllSchemes(testutils.GetAuthenticatedContext(""))
+				getAllResp, err := GetAllSchemes(testutils.GetAuthenticatedContext(""), &GetAllSchemesParams{})
 				require.NoError(t, err)
 				require.Equal(t, 0, len(getAllResp.Schemes))
 			}

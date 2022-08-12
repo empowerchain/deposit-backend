@@ -84,7 +84,7 @@ func TestCreateVoucherDefinition(t *testing.T) {
 				require.Equal(t, test.params.OrganizationID, resp.OrganizationID)
 				require.Equal(t, test.params.PictureURL, resp.PictureURL)
 
-				allVoucherDefinitions, err := GetAllVoucherDefinitions(testutils.GetAuthenticatedContext(testutils.AdminPubKey))
+				allVoucherDefinitions, err := GetAllVoucherDefinitions(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetAllVoucherDefinitionsParams{})
 				require.NoError(t, err)
 				require.Equal(t, 1, len(allVoucherDefinitions.VoucherDefinitions))
 
@@ -98,7 +98,7 @@ func TestCreateVoucherDefinition(t *testing.T) {
 				require.Error(t, err)
 				require.Equal(t, test.errorCode, err.(*errs.Error).Code)
 
-				allVoucherDefinitions, err := GetAllVoucherDefinitions(testutils.GetAuthenticatedContext(testutils.AdminPubKey))
+				allVoucherDefinitions, err := GetAllVoucherDefinitions(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetAllVoucherDefinitionsParams{})
 				require.NoError(t, err)
 				require.Equal(t, 0, len(allVoucherDefinitions.VoucherDefinitions))
 			}
@@ -131,7 +131,7 @@ func TestGetAllVoucherDefinitions(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	allVoucherDefinitions, err := GetAllVoucherDefinitions(testutils.GetAuthenticatedContext(testutils.AdminPubKey))
+	allVoucherDefinitions, err := GetAllVoucherDefinitions(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetAllVoucherDefinitionsParams{})
 	require.NoError(t, err)
 	require.Equal(t, numberOfVoucherDefs, len(allVoucherDefinitions.VoucherDefinitions))
 

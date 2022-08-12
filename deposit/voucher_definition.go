@@ -70,16 +70,26 @@ func GetVoucherDefinition(ctx context.Context, params *GetVoucherDefinitionParam
 	return &vd, nil
 }
 
+type GetAllVoucherDefinitionsParams struct {
+	OrganizationID string `json:"organizationID"`
+}
+
 type GetAllVoucherDefinitionsResponse struct {
 	VoucherDefinitions []Definition `json:"voucherDefinitions"`
 }
 
+// TODO: WRITE TESTS FOR SEARCH PARAMS
 //encore:api public method=POST
-func GetAllVoucherDefinitions(_ context.Context) (*GetAllVoucherDefinitionsResponse, error) {
+func GetAllVoucherDefinitions(ctx context.Context, params *GetAllVoucherDefinitionsParams) (*GetAllVoucherDefinitionsResponse, error) {
 	resp := &GetAllVoucherDefinitionsResponse{}
-	rows, err := sqldb.Query(context.Background(), `
-        SELECT id, organization_id, name, picture_url FROM voucher_definition
-    `)
+	var rows *sqldb.Rows
+	var err error
+	if params.OrganizationID == "" {
+		rows, err = sqldb.Query(ctx, `SELECT id, organization_id, name, picture_url FROM voucher_definition`)
+	} else {
+		rows, err = sqldb.Query(ctx, `SELECT id, organization_id, name, picture_url FROM voucher_definition WHERE organization_id=$1`, params.OrganizationID)
+	}
+
 	if err != nil {
 		return nil, err
 	}

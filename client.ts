@@ -146,6 +146,10 @@ export namespace deposit {
         deposits: Deposit[]
     }
 
+    export interface GetAllVoucherDefinitionsParams {
+        organizationID: string
+    }
+
     export interface GetAllVoucherDefinitionsResponse {
         voucherDefinitions: Definition[]
     }
@@ -222,9 +226,12 @@ export namespace deposit {
             return await resp.json() as GetAllDepositsResponse
         }
 
-        public async GetAllVoucherDefinitions(): Promise<GetAllVoucherDefinitionsResponse> {
+        /**
+         * TODO: WRITE TESTS FOR SEARCH PARAMS
+         */
+        public async GetAllVoucherDefinitions(params: GetAllVoucherDefinitionsParams): Promise<GetAllVoucherDefinitionsResponse> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callAPI("POST", `/deposit.GetAllVoucherDefinitions`)
+            const resp = await this.baseClient.callAPI("POST", `/deposit.GetAllVoucherDefinitions`, JSON.stringify(params))
             return await resp.json() as GetAllVoucherDefinitionsResponse
         }
 
@@ -341,6 +348,10 @@ export namespace scheme {
         rewardDefinitions: commons.RewardDefinition[]
     }
 
+    export interface GetAllSchemesParams {
+        organizationID: string
+    }
+
     export interface GetAllSchemesResponse {
         schemes: Scheme[]
     }
@@ -379,9 +390,12 @@ export namespace scheme {
             await this.baseClient.callAPI("PUT", `/scheme.EditScheme`, JSON.stringify(params))
         }
 
-        public async GetAllSchemes(): Promise<GetAllSchemesResponse> {
+        /**
+         * TODO: WRITE TESTS FOR SEARCH PARAMS
+         */
+        public async GetAllSchemes(params: GetAllSchemesParams): Promise<GetAllSchemesResponse> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callAPI("POST", `/scheme.GetAllSchemes`)
+            const resp = await this.baseClient.callAPI("POST", `/scheme.GetAllSchemes`, JSON.stringify(params))
             return await resp.json() as GetAllSchemesResponse
         }
 
