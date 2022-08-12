@@ -139,9 +139,9 @@ func GetAllSchemes(ctx context.Context, params *GetAllSchemesParams) (resp *GetA
 
 	var rows *sqldb.Rows
 	if params.OrganizationID == "" {
-		rows, err = sqldb.Query(ctx, `SELECT id FROM scheme`)
+		rows, err = sqldb.Query(ctx, `SELECT id, name FROM scheme`)
 	} else {
-		rows, err = sqldb.Query(ctx, `SELECT id FROM scheme WHERE organization_id=$1`, params.OrganizationID)
+		rows, err = sqldb.Query(ctx, `SELECT id, name FROM scheme WHERE organization_id=$1`, params.OrganizationID)
 	}
 	if err != nil {
 		return nil, err
@@ -150,7 +150,7 @@ func GetAllSchemes(ctx context.Context, params *GetAllSchemesParams) (resp *GetA
 
 	for rows.Next() {
 		var s Scheme
-		if err := rows.Scan(&s.ID); err != nil {
+		if err := rows.Scan(&s.ID, &s.Name); err != nil {
 			return nil, err
 		}
 		resp.Schemes = append(resp.Schemes, s)
