@@ -18,6 +18,12 @@ type Voucher struct {
 	Invalidated         bool   `json:"invalidated"`
 }
 
+// TODO: Test that voucher def gets returned everywhere
+type VoucherResponse struct {
+	Voucher           Voucher           `json:"voucher"`
+	VoucherDefinition VoucherDefinition `json:"voucherDefinition"`
+}
+
 func mintVoucher(ctx context.Context, tx *sqldb.Tx, voucherDef *VoucherDefinition, ownerPubKey string) (string, error) {
 	id := commons.GenerateID()
 	if _, err := tx.Exec(ctx, `
@@ -35,7 +41,7 @@ type GetVoucherParams struct {
 }
 
 //encore:api public method=POST
-func GetVoucher(ctx context.Context, params *GetVoucherParams) (*Voucher, error) {
+func GetVoucher(ctx context.Context, params *GetVoucherParams) (*VoucherResponse, error) {
 	if err := commons.Validate(params); err != nil {
 		return nil, err
 	}
@@ -50,17 +56,25 @@ func GetVoucher(ctx context.Context, params *GetVoucherParams) (*Voucher, error)
 		return nil, err
 	}
 
-	return &v, nil
+	vd, err := GetVoucherDefinition(ctx, &GetVoucherDefinitionParams{VoucherDefinitionID: v.VoucherDefinitionID})
+	if err != nil {
+		return nil, err
+	}
+
+	return &VoucherResponse{
+		Voucher:           v,
+		VoucherDefinition: *vd,
+	}, nil
 }
 
 type GetAllVouchersResponse struct {
-	Vouchers []Voucher `json:"vouchers"`
+	Vouchers []VoucherResponse `json:"vouchers"`
 }
 
 //encore:api public method=POST
-func GetAllVouchers(_ context.Context) (*GetAllVouchersResponse, error) {
+func GetAllVouchers(ctx context.Context) (*GetAllVouchersResponse, error) {
 	resp := &GetAllVouchersResponse{}
-	rows, err := sqldb.Query(context.Background(), `
+	rows, err := sqldb.Query(ctx, `
         SELECT id, voucher_definition_id, owner_pub_key, invalidated FROM voucher
     `)
 	if err != nil {
@@ -73,7 +87,16 @@ func GetAllVouchers(_ context.Context) (*GetAllVouchersResponse, error) {
 		if err := rows.Scan(&v.ID, &v.VoucherDefinitionID, &v.OwnerPubKey, &v.Invalidated); err != nil {
 			return nil, err
 		}
-		resp.Vouchers = append(resp.Vouchers, v)
+
+		vd, err := GetVoucherDefinition(ctx, &GetVoucherDefinitionParams{VoucherDefinitionID: v.VoucherDefinitionID})
+		if err != nil {
+			return nil, err
+		}
+
+		resp.Vouchers = append(resp.Vouchers, VoucherResponse{
+			Voucher:           v,
+			VoucherDefinition: *vd,
+		})
 	}
 
 	return resp, rows.Err()
@@ -84,17 +107,17 @@ type GetVouchersForUserParams struct {
 }
 
 type GetVouchersForUserResponse struct {
-	Vouchers []Voucher `json:"vouchers"`
+	Vouchers []VoucherResponse `json:"vouchers"`
 }
 
 //encore:api public method=POST
-func GetVouchersForUser(_ context.Context, params *GetVouchersForUserParams) (*GetVouchersForUserResponse, error) {
+func GetVouchersForUser(ctx context.Context, params *GetVouchersForUserParams) (*GetVouchersForUserResponse, error) {
 	if err := commons.Validate(params); err != nil {
 		return nil, err
 	}
 
 	resp := &GetVouchersForUserResponse{}
-	rows, err := sqldb.Query(context.Background(), `
+	rows, err := sqldb.Query(ctx, `
         SELECT id, voucher_definition_id, owner_pub_key, invalidated FROM voucher WHERE owner_pub_key=$1
     `, params.UserPubKey)
 	if err != nil {
@@ -107,7 +130,15 @@ func GetVouchersForUser(_ context.Context, params *GetVouchersForUserParams) (*G
 		if err := rows.Scan(&v.ID, &v.VoucherDefinitionID, &v.OwnerPubKey, &v.Invalidated); err != nil {
 			return nil, err
 		}
-		resp.Vouchers = append(resp.Vouchers, v)
+
+		vd, err := GetVoucherDefinition(ctx, &GetVoucherDefinitionParams{VoucherDefinitionID: v.VoucherDefinitionID})
+		if err != nil {
+			return nil, err
+		}
+		resp.Vouchers = append(resp.Vouchers, VoucherResponse{
+			Voucher:           v,
+			VoucherDefinition: *vd,
+		})
 	}
 
 	return resp, rows.Err()
@@ -123,16 +154,16 @@ func InvalidateVoucher(ctx context.Context, params *InvalidateVoucherParams) err
 		return err
 	}
 
-	voucher, err := GetVoucher(ctx, &GetVoucherParams{VoucherID: params.VoucherID})
+	voucherRes, err := GetVoucher(ctx, &GetVoucherParams{VoucherID: params.VoucherID})
 	if err != nil {
 		return err
 	}
 
-	if err := authorizeCallerForVoucher(ctx, voucher); err != nil {
+	if err := authorizeCallerForVoucher(ctx, &voucherRes.Voucher); err != nil {
 		return err
 	}
 
-	_, err = sqldb.Exec(ctx, "UPDATE voucher SET invalidated = true WHERE id=$1", voucher.ID)
+	_, err = sqldb.Exec(ctx, "UPDATE voucher SET invalidated = true WHERE id=$1", voucherRes.Voucher.ID)
 	return err
 }
 

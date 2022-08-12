@@ -148,7 +148,7 @@ export namespace deposit {
     }
 
     export interface GetAllVouchersResponse {
-        vouchers: Voucher[]
+        vouchers: VoucherResponse[]
     }
 
     export interface GetDepositByExternalRefParams {
@@ -173,7 +173,7 @@ export namespace deposit {
     }
 
     export interface GetVouchersForUserResponse {
-        vouchers: Voucher[]
+        vouchers: VoucherResponse[]
     }
 
     export interface InvalidateVoucherParams {
@@ -199,6 +199,14 @@ export namespace deposit {
         organizationID: string
         name: string
         pictureURL: string
+    }
+
+    /**
+     * TODO: Test that voucher def gets returned everywhere
+     */
+    export interface VoucherResponse {
+        voucher: Voucher
+        voucherDefinition: VoucherDefinition
     }
 
     export class ServiceClient {
@@ -253,10 +261,10 @@ export namespace deposit {
             return await resp.json() as Deposit
         }
 
-        public async GetVoucher(params: GetVoucherParams): Promise<Voucher> {
+        public async GetVoucher(params: GetVoucherParams): Promise<VoucherResponse> {
             // Now make the actual call to the API
             const resp = await this.baseClient.callAPI("POST", `/deposit.GetVoucher`, JSON.stringify(params))
-            return await resp.json() as Voucher
+            return await resp.json() as VoucherResponse
         }
 
         public async GetVoucherDefinition(params: GetVoucherDefinitionParams): Promise<VoucherDefinition> {

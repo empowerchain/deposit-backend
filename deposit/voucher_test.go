@@ -44,10 +44,10 @@ func TestGetAllVouchers(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, numberOfVouchers, len(allVouchers.Vouchers))
 
-	for _, voucher := range allVouchers.Vouchers {
-		require.Equal(t, voucherDefinition.ID, voucher.VoucherDefinitionID)
-		require.NotEqual(t, "", voucher.ID)
-		require.NotEqual(t, "pictureURL", voucher.OwnerPubKey)
+	for _, voucherRes := range allVouchers.Vouchers {
+		require.Equal(t, voucherDefinition.ID, voucherRes.Voucher.VoucherDefinitionID)
+		require.NotEqual(t, "", voucherRes.Voucher.ID)
+		require.NotEqual(t, "pictureURL", voucherRes.Voucher.OwnerPubKey)
 	}
 }
 
@@ -175,16 +175,16 @@ func TestInvalidateVoucher(t *testing.T) {
 			if test.errorCode == errs.OK {
 				require.NoError(t, err)
 
-				dbVoucher, err := GetVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetVoucherParams{VoucherID: mintedVoucherId})
+				dbVoucherRes, err := GetVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetVoucherParams{VoucherID: mintedVoucherId})
 				require.NoError(t, err)
-				require.True(t, dbVoucher.Invalidated)
+				require.True(t, dbVoucherRes.Voucher.Invalidated)
 			} else {
 				require.Error(t, err)
 				require.Equal(t, test.errorCode, err.(*errs.Error).Code)
 
-				dbVoucher, err := GetVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetVoucherParams{VoucherID: mintedVoucherId})
+				dbVoucherRes, err := GetVoucher(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetVoucherParams{VoucherID: mintedVoucherId})
 				require.NoError(t, err)
-				require.False(t, dbVoucher.Invalidated)
+				require.False(t, dbVoucherRes.Voucher.Invalidated)
 			}
 		})
 	}
