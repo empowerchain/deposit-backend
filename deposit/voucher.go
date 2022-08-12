@@ -34,7 +34,7 @@ type GetVoucherParams struct {
 	VoucherID string `json:"voucherID" validate:"required"`
 }
 
-//encore:api auth method=POST
+//encore:api public method=POST
 func GetVoucher(ctx context.Context, params *GetVoucherParams) (*Voucher, error) {
 	if err := commons.Validate(params); err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ type GetAllVouchersResponse struct {
 	Vouchers []Voucher `json:"vouchers"`
 }
 
-//encore:api auth method=POST
+//encore:api public method=POST
 func GetAllVouchers(_ context.Context) (*GetAllVouchersResponse, error) {
 	resp := &GetAllVouchersResponse{}
 	rows, err := sqldb.Query(context.Background(), `
@@ -87,7 +87,7 @@ type GetVouchersForUserResponse struct {
 	Vouchers []Voucher `json:"vouchers"`
 }
 
-//encore:api auth method=POST
+//encore:api public method=POST
 func GetVouchersForUser(_ context.Context, params *GetVouchersForUserParams) (*GetVouchersForUserResponse, error) {
 	if err := commons.Validate(params); err != nil {
 		return nil, err

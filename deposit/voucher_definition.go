@@ -51,7 +51,7 @@ type GetVoucherDefinitionParams struct {
 	VoucherDefinitionID string `json:"voucherDefinitionID" validate:"required"`
 }
 
-//encore:api auth method=POST
+//encore:api public method=POST
 func GetVoucherDefinition(ctx context.Context, params *GetVoucherDefinitionParams) (*Definition, error) {
 	if err := commons.Validate(params); err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ type GetAllVoucherDefinitionsResponse struct {
 	VoucherDefinitions []Definition `json:"voucherDefinitions"`
 }
 
-//encore:api auth method=POST
+//encore:api public method=POST
 func GetAllVoucherDefinitions(_ context.Context) (*GetAllVoucherDefinitionsResponse, error) {
 	resp := &GetAllVoucherDefinitionsResponse{}
 	rows, err := sqldb.Query(context.Background(), `

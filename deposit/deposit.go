@@ -147,7 +147,7 @@ type GetDepositParams struct {
 	DepositID string `json:"depositID" validate:"required"`
 }
 
-//encore:api auth method=POST
+//encore:api public method=POST
 func GetDeposit(ctx context.Context, params *GetDepositParams) (*Deposit, error) {
 	if err := commons.Validate(params); err != nil {
 		return nil, err
@@ -175,7 +175,7 @@ type GetDepositByExternalRefParams struct {
 	ExternalRef           string `json:"externalRef" validate:"required"`
 }
 
-//encore:api auth method=POST
+//encore:api public method=POST
 func GetDepositByExternalRef(ctx context.Context, params *GetDepositByExternalRefParams) (*Deposit, error) {
 	if err := commons.Validate(params); err != nil {
 		return nil, err
@@ -202,7 +202,7 @@ type GetAllDepositsResponse struct {
 	Deposits []Deposit `json:"deposits"`
 }
 
-//encore:api auth method=POST
+//encore:api public method=POST
 func GetAllDeposits(_ context.Context) (*GetAllDepositsResponse, error) {
 	resp := &GetAllDepositsResponse{}
 	rows, err := sqldb.Query(context.Background(), `

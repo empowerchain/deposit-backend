@@ -53,7 +53,7 @@ type GetOrganizationParams struct {
 	ID string `json:"ID" validate:"required"`
 }
 
-//encore:api auth method=POST
+//encore:api public method=POST
 func GetOrganization(ctx context.Context, params *GetOrganizationParams) (*Organization, error) {
 	var o Organization
 	if err := sqldb.QueryRow(ctx, "SELECT id, name, pub_key FROM organization WHERE id=$1", params.ID).Scan(&o.ID, &o.Name, &o.PubKey); err != nil {
@@ -105,7 +105,7 @@ type GetAllOrganizationsResponse struct {
 	Organizations []Organization `json:"organizations"`
 }
 
-//encore:api auth method=POST
+//encore:api public method=POST
 func GetAllOrganizations(_ context.Context) (*GetAllOrganizationsResponse, error) {
 	resp := &GetAllOrganizationsResponse{}
 	rows, err := sqldb.Query(context.Background(), `

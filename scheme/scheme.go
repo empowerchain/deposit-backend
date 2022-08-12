@@ -100,7 +100,7 @@ type GetSchemeParams struct {
 	SchemeID string `json:"schemeID"`
 }
 
-//encore:api auth method=POST
+//encore:api public method=POST
 func GetScheme(ctx context.Context, params *GetSchemeParams) (*Scheme, error) {
 	if err := commons.Validate(params); err != nil {
 		return nil, err
@@ -128,7 +128,7 @@ type GetAllSchemesResponse struct {
 	Schemes []Scheme `json:"schemes"`
 }
 
-//encore:api auth method=POST
+//encore:api public method=POST
 func GetAllSchemes(_ context.Context) (resp *GetAllSchemesResponse, err error) {
 	resp = &GetAllSchemesResponse{}
 	rows, err := sqldb.Query(context.Background(), `
