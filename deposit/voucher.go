@@ -18,7 +18,7 @@ type Voucher struct {
 	Invalidated         bool   `json:"invalidated"`
 }
 
-func mintVoucher(ctx context.Context, tx *sqldb.Tx, voucherDef *Definition, ownerPubKey string) (string, error) {
+func mintVoucher(ctx context.Context, tx *sqldb.Tx, voucherDef *VoucherDefinition, ownerPubKey string) (string, error) {
 	id := commons.GenerateID()
 	if _, err := tx.Exec(ctx, `
         INSERT INTO voucher (id, voucher_definition_id, owner_pub_key, invalidated)

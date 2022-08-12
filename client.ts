@@ -124,13 +124,6 @@ export namespace deposit {
         pictureURL: string
     }
 
-    export interface Definition {
-        id: string
-        organizationID: string
-        name: string
-        pictureURL: string
-    }
-
     export interface Deposit {
         id: string
         schemeID: string
@@ -151,7 +144,7 @@ export namespace deposit {
     }
 
     export interface GetAllVoucherDefinitionsResponse {
-        voucherDefinitions: Definition[]
+        voucherDefinitions: VoucherDefinition[]
     }
 
     export interface GetAllVouchersResponse {
@@ -201,6 +194,13 @@ export namespace deposit {
         invalidated: boolean
     }
 
+    export interface VoucherDefinition {
+        id: string
+        organizationID: string
+        name: string
+        pictureURL: string
+    }
+
     export class ServiceClient {
         private baseClient: BaseClient
 
@@ -214,10 +214,10 @@ export namespace deposit {
             return await resp.json() as ClaimResponse
         }
 
-        public async CreateVoucherDefinition(params: CreateVoucherDefinitionParams): Promise<Definition> {
+        public async CreateVoucherDefinition(params: CreateVoucherDefinitionParams): Promise<VoucherDefinition> {
             // Now make the actual call to the API
             const resp = await this.baseClient.callAPI("POST", `/deposit.CreateVoucherDefinition`, JSON.stringify(params))
-            return await resp.json() as Definition
+            return await resp.json() as VoucherDefinition
         }
 
         public async GetAllDeposits(): Promise<GetAllDepositsResponse> {
@@ -259,10 +259,10 @@ export namespace deposit {
             return await resp.json() as Voucher
         }
 
-        public async GetVoucherDefinition(params: GetVoucherDefinitionParams): Promise<Definition> {
+        public async GetVoucherDefinition(params: GetVoucherDefinitionParams): Promise<VoucherDefinition> {
             // Now make the actual call to the API
             const resp = await this.baseClient.callAPI("POST", `/deposit.GetVoucherDefinition`, JSON.stringify(params))
-            return await resp.json() as Definition
+            return await resp.json() as VoucherDefinition
         }
 
         public async GetVouchersForUser(params: GetVouchersForUserParams): Promise<GetVouchersForUserResponse> {

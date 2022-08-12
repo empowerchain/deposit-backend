@@ -10,7 +10,7 @@ import (
 	"errors"
 )
 
-type Definition struct {
+type VoucherDefinition struct {
 	ID             string `json:"id"`
 	OrganizationID string `json:"organizationID"`
 	Name           string `json:"name"`
@@ -24,7 +24,7 @@ type CreateVoucherDefinitionParams struct {
 }
 
 //encore:api auth method=POST
-func CreateVoucherDefinition(ctx context.Context, params *CreateVoucherDefinitionParams) (*Definition, error) {
+func CreateVoucherDefinition(ctx context.Context, params *CreateVoucherDefinitionParams) (*VoucherDefinition, error) {
 	if err := commons.Validate(params); err != nil {
 		return nil, err
 	}
@@ -52,12 +52,12 @@ type GetVoucherDefinitionParams struct {
 }
 
 //encore:api public method=POST
-func GetVoucherDefinition(ctx context.Context, params *GetVoucherDefinitionParams) (*Definition, error) {
+func GetVoucherDefinition(ctx context.Context, params *GetVoucherDefinitionParams) (*VoucherDefinition, error) {
 	if err := commons.Validate(params); err != nil {
 		return nil, err
 	}
 
-	var vd Definition
+	var vd VoucherDefinition
 	if err := sqldb.QueryRow(ctx, "SELECT id, organization_id, name, picture_url FROM voucher_definition WHERE id=$1", params.VoucherDefinitionID).Scan(&vd.ID, &vd.OrganizationID, &vd.Name, &vd.PictureURL); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &errs.Error{
@@ -75,7 +75,7 @@ type GetAllVoucherDefinitionsParams struct {
 }
 
 type GetAllVoucherDefinitionsResponse struct {
-	VoucherDefinitions []Definition `json:"voucherDefinitions"`
+	VoucherDefinitions []VoucherDefinition `json:"voucherDefinitions"`
 }
 
 // TODO: WRITE TESTS FOR SEARCH PARAMS
@@ -96,7 +96,7 @@ func GetAllVoucherDefinitions(ctx context.Context, params *GetAllVoucherDefiniti
 	defer rows.Close()
 
 	for rows.Next() {
-		var d Definition
+		var d VoucherDefinition
 		if err := rows.Scan(&d.ID, &d.OrganizationID, &d.Name, &d.PictureURL); err != nil {
 			return nil, err
 		}
