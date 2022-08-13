@@ -8,7 +8,10 @@ import (
 	"encore.dev/beta/auth"
 	"encore.dev/beta/errs"
 	"fmt"
+	secp256k1btc "github.com/btcsuite/btcd/btcec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/tendermint/tendermint/crypto"
+	"math/big"
 	"time"
 )
 
@@ -52,14 +55,22 @@ func AuthHandler(_ context.Context, token string) (auth.UID, error) {
 	if err != nil {
 		return "", errs.WrapCode(err, errs.Unauthenticated, "failed to decode pubKey from hex")
 	}
-	pubKey := secp256k1.PubKey{Key: pk}
+	pub, err := secp256k1btc.ParsePubKey(pk, secp256k1btc.S256())
+	if err != nil {
+		return "", errs.WrapCode(err, errs.Unauthenticated, "failed to parse pubKey")
+	}
 
 	sig, err := hex.DecodeString(authData.Signature)
 	if err != nil {
 		return "", errs.WrapCode(err, errs.Unauthenticated, "failed to decode signature from hex")
 	}
 
-	if ok := pubKey.VerifySignature([]byte(authData.Payload), sig); !ok {
+	signature := &secp256k1btc.Signature{
+		R: new(big.Int).SetBytes(sig[:32]),
+		S: new(big.Int).SetBytes(sig[32:64]),
+	}
+
+	if ok := signature.Verify(crypto.Sha256([]byte(authData.Payload)), pub); !ok {
 		return "", &errs.Error{
 			Message: "failed to verify signature",
 			Code:    errs.Unauthenticated,

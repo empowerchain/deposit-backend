@@ -2,7 +2,9 @@ package commons
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"encore.dev/beta/errs"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/stretchr/testify/require"
@@ -60,7 +62,7 @@ func TestAuthHandler(t *testing.T) {
 }
 
 func TestFromPrivateKey(t *testing.T) {
-	privateKeyBytes, err := hex.DecodeString("1eaa8d64b64c130d8690791e16e800f8e1bac55dd49aed88b325f3818770aa31")
+	privateKeyBytes, err := hex.DecodeString("2ea029a07b085d75ebfdef7318ec848ef0f6d8bef4506f363f433672f1e57f41")
 	require.NoError(t, err)
 	privateKey := &secp256k1.PrivKey{
 		Key: privateKeyBytes,
@@ -73,6 +75,33 @@ func TestFromPrivateKey(t *testing.T) {
 	uid, err := AuthHandler(context.Background(), token)
 	require.NoError(t, err)
 	require.Equal(t, pubKeyHex, string(uid))
+}
+
+func TestInvalidSignature(t *testing.T) {
+	privateKeyBytes, err := hex.DecodeString("2ea029a07b085d75ebfdef7318ec848ef0f6d8bef4506f363f433672f1e57f41")
+	require.NoError(t, err)
+	privateKey := &secp256k1.PrivKey{
+		Key: privateKeyBytes,
+	}
+	publicKey := privateKey.PubKey().(*secp256k1.PubKey)
+
+	token, _, err := GetToken(privateKey, publicKey, ClientName)
+	require.NoError(t, err)
+
+	b, err := base64.StdEncoding.DecodeString(token)
+	require.NoError(t, err)
+
+	var authData AuthData
+	err = json.Unmarshal(b, &authData)
+	require.NoError(t, err)
+
+	authData.Signature = "0307543f39d8887f493049c72526e4f943e853f417f487a6ae25e7cab9c89bb31cdb823c8986279b7a08fe7ebaf9037bd1e9163ef13b6b00b1835ac0c5d48f8b"
+	b2, err := json.Marshal(authData)
+	require.NoError(t, err)
+
+	tokenWithInvalidSignature := base64.StdEncoding.EncodeToString(b2)
+	_, err = AuthHandler(context.Background(), tokenWithInvalidSignature)
+	require.EqualError(t, err, "unauthenticated: failed to verify signature")
 }
 
 func TestFrontendCreatedAuth(t *testing.T) {
