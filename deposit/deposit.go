@@ -198,16 +198,31 @@ func GetDepositByExternalRef(ctx context.Context, params *GetDepositByExternalRe
 	return &d, nil
 }
 
+type GetAllDepositsParams struct {
+	UserPubKey string `json:"userPubKey"`
+	Desc       bool   `json:"desc"`
+}
+
 type GetAllDepositsResponse struct {
 	Deposits []Deposit `json:"deposits"`
 }
 
 //encore:api public method=POST
-func GetAllDeposits(_ context.Context) (*GetAllDepositsResponse, error) {
+func GetAllDeposits(ctx context.Context, params *GetAllDepositsParams) (*GetAllDepositsResponse, error) {
 	resp := &GetAllDepositsResponse{}
-	rows, err := sqldb.Query(context.Background(), `
-        SELECT id from deposit
-    `)
+
+	order := "ASC"
+	if params.Desc {
+		order = "DESC"
+	}
+
+	var rows *sqldb.Rows
+	var err error
+	if params.UserPubKey == "" {
+		rows, err = sqldb.Query(ctx, `SELECT id, scheme_id, collection_point_pub_key, user_pub_key, mass_balance_deposits, claimed, created_at FROM deposit ORDER BY created_at `+order)
+	} else {
+		rows, err = sqldb.Query(ctx, `SELECT id, scheme_id, collection_point_pub_key, user_pub_key, mass_balance_deposits, claimed, created_at FROM deposit WHERE user_pub_key=$1 ORDER BY created_at `+order, params.UserPubKey)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +230,11 @@ func GetAllDeposits(_ context.Context) (*GetAllDepositsResponse, error) {
 
 	for rows.Next() {
 		var d Deposit
-		if err := rows.Scan(&d.ID); err != nil {
+		var massBalanceJson string
+		if err := rows.Scan(&d.ID, &d.SchemeID, &d.CollectionPointPubKey, &d.UserPubKey, &massBalanceJson, &d.Claimed, &d.CreatedAt); err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal([]byte(massBalanceJson), &d.MassBalanceDeposits); err != nil {
 			return nil, err
 		}
 		resp.Deposits = append(resp.Deposits, d)

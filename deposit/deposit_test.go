@@ -187,7 +187,7 @@ func TestMakeDeposit(t *testing.T) {
 				require.NoError(t, err)
 				require.NotEqual(t, "", deposit.ID)
 
-				getAllResp, err := GetAllDeposits(testutils.GetAuthenticatedContext(""))
+				getAllResp, err := GetAllDeposits(testutils.GetAuthenticatedContext(""), &GetAllDepositsParams{})
 				require.NoError(t, err)
 				require.Equal(t, 1, len(getAllResp.Deposits))
 
@@ -205,7 +205,7 @@ func TestMakeDeposit(t *testing.T) {
 				require.Error(t, err)
 				require.Equal(t, test.errorCode, err.(*errs.Error).Code)
 
-				getAllResp, err := GetAllDeposits(testutils.GetAuthenticatedContext(""))
+				getAllResp, err := GetAllDeposits(testutils.GetAuthenticatedContext(""), &GetAllDepositsParams{})
 				require.NoError(t, err)
 				require.Equal(t, 0, len(getAllResp.Deposits))
 			}
