@@ -9,13 +9,15 @@ import (
 	"encore.dev/beta/errs"
 	"encore.dev/storage/sqldb"
 	"errors"
+	"time"
 )
 
 type Voucher struct {
-	ID                  string `json:"id"`
-	VoucherDefinitionID string `json:"voucherDefinitionID"`
-	OwnerPubKey         string `json:"ownerPubKey"`
-	Invalidated         bool   `json:"invalidated"`
+	ID                  string    `json:"id"`
+	VoucherDefinitionID string    `json:"voucherDefinitionID"`
+	OwnerPubKey         string    `json:"ownerPubKey"`
+	Invalidated         bool      `json:"invalidated"`
+	CreatedAt           time.Time `json:"createdAt"`
 }
 
 // TODO: Test that voucher def gets returned everywhere
@@ -118,7 +120,7 @@ func GetVouchersForUser(ctx context.Context, params *GetVouchersForUserParams) (
 
 	resp := &GetVouchersForUserResponse{}
 	rows, err := sqldb.Query(ctx, `
-        SELECT id, voucher_definition_id, owner_pub_key, invalidated FROM voucher WHERE owner_pub_key=$1
+        SELECT id, voucher_definition_id, owner_pub_key, invalidated, created_at FROM voucher WHERE owner_pub_key=$1 ORDER BY created_at DESC
     `, params.UserPubKey)
 	if err != nil {
 		return nil, err
@@ -127,7 +129,7 @@ func GetVouchersForUser(ctx context.Context, params *GetVouchersForUserParams) (
 
 	for rows.Next() {
 		var v Voucher
-		if err := rows.Scan(&v.ID, &v.VoucherDefinitionID, &v.OwnerPubKey, &v.Invalidated); err != nil {
+		if err := rows.Scan(&v.ID, &v.VoucherDefinitionID, &v.OwnerPubKey, &v.Invalidated, &v.CreatedAt); err != nil {
 			return nil, err
 		}
 
