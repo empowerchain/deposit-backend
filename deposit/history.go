@@ -53,5 +53,8 @@ func GetHistory(ctx context.Context, params *GetHistoryParams) (*GetHistoryRespo
 		}
 	}
 
+	if events == nil {
+		events = []Event{}
+	}
 	return &GetHistoryResponse{Events: events}, nil
 }

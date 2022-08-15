@@ -100,6 +100,21 @@ func TestGetAllVouchersForUser(t *testing.T) {
 	require.Equal(t, numberOfVouchersForOtherUser, len(vouchersForOtherUser.Vouchers))
 }
 
+func TestGetVouchersForForNonExistingUser(t *testing.T) {
+	testutils.ClearAllDBs()
+
+	userPubKey, _ := testutils.GenerateKeys()
+	all, err := GetAllVouchers(testutils.GetAuthenticatedContext(userPubKey))
+	require.NoError(t, err)
+	require.NotNil(t, all.Vouchers)
+	require.Equal(t, 0, len(all.Vouchers))
+
+	usersVouchers, err := GetVouchersForUser(testutils.GetAuthenticatedContext(userPubKey), &GetVouchersForUserParams{UserPubKey: userPubKey})
+	require.NoError(t, err)
+	require.NotNil(t, usersVouchers.Vouchers)
+	require.Equal(t, 0, len(usersVouchers.Vouchers))
+}
+
 func TestInvalidateVoucher(t *testing.T) {
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))

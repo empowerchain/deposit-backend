@@ -75,7 +75,9 @@ type GetAllVouchersResponse struct {
 
 //encore:api public method=POST
 func GetAllVouchers(ctx context.Context) (*GetAllVouchersResponse, error) {
-	resp := &GetAllVouchersResponse{}
+	resp := &GetAllVouchersResponse{
+		Vouchers: []VoucherResponse{},
+	}
 	rows, err := sqldb.Query(ctx, `
         SELECT id, voucher_definition_id, owner_pub_key, invalidated FROM voucher
     `)
@@ -118,7 +120,9 @@ func GetVouchersForUser(ctx context.Context, params *GetVouchersForUserParams) (
 		return nil, err
 	}
 
-	resp := &GetVouchersForUserResponse{}
+	resp := &GetVouchersForUserResponse{
+		Vouchers: []VoucherResponse{},
+	}
 	rows, err := sqldb.Query(ctx, `
         SELECT id, voucher_definition_id, owner_pub_key, invalidated, created_at FROM voucher WHERE owner_pub_key=$1 ORDER BY created_at DESC
     `, params.UserPubKey)
