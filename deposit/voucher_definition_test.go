@@ -14,12 +14,14 @@ func TestCreateVoucherDefinition(t *testing.T) {
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))
 
-	organizationPubKey, _ := testutils.GenerateKeys()
+	orgSigningPubKey, _ := testutils.GenerateKeys()
+	orgEncryptionPubKey, _ := testutils.GenerateKeys()
 	notOrganizationPubKey, _ := testutils.GenerateKeys()
 	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
-		ID:     testOrganizationId,
-		Name:   testOrganizationId,
-		PubKey: organizationPubKey,
+		ID:               testOrganizationId,
+		Name:             testOrganizationId,
+		SigningPubKey:    orgSigningPubKey,
+		EncryptionPubKey: orgEncryptionPubKey,
 	})
 	require.NoError(t, err)
 
@@ -37,7 +39,7 @@ func TestCreateVoucherDefinition(t *testing.T) {
 				PictureURL:     "https://whatever.com/image.png",
 			},
 			errorCode: errs.OK,
-			uid:       organizationPubKey,
+			uid:       orgSigningPubKey,
 		},
 		{
 			name: "Organization does not exist",
@@ -47,7 +49,7 @@ func TestCreateVoucherDefinition(t *testing.T) {
 				PictureURL:     "https://whatever.com/image.png",
 			},
 			errorCode: errs.NotFound,
-			uid:       organizationPubKey,
+			uid:       orgSigningPubKey,
 		},
 		{
 			name: "Caller not organization",
@@ -115,11 +117,13 @@ func TestGetAllVoucherDefinitions(t *testing.T) {
 	pictureURL := "https://something.co/pop.png"
 
 	require.NoError(t, admin.InsertTestData(context.Background()))
-	organizationPubKey, _ := testutils.GenerateKeys()
+	orgSigningPubKey, _ := testutils.GenerateKeys()
+	orgEncryptionPubKey, _ := testutils.GenerateKeys()
 	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
-		ID:     testOrganizationId,
-		Name:   testOrganizationId,
-		PubKey: organizationPubKey,
+		ID:               testOrganizationId,
+		Name:             testOrganizationId,
+		SigningPubKey:    orgSigningPubKey,
+		EncryptionPubKey: orgEncryptionPubKey,
 	})
 
 	for i := 0; i < numberOfVoucherDefs; i++ {
@@ -150,11 +154,13 @@ func TestEditVoucherDefinition(t *testing.T) {
 	pictureURL := "https://something.co/pop.png"
 
 	require.NoError(t, admin.InsertTestData(context.Background()))
-	organizationPubKey, _ := testutils.GenerateKeys()
+	orgSigningPubKey, _ := testutils.GenerateKeys()
+	orgEncryptionPubKey, _ := testutils.GenerateKeys()
 	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
-		ID:     testOrganizationId,
-		Name:   testOrganizationId,
-		PubKey: organizationPubKey,
+		ID:               testOrganizationId,
+		Name:             testOrganizationId,
+		SigningPubKey:    orgSigningPubKey,
+		EncryptionPubKey: orgEncryptionPubKey,
 	})
 
 	vd, err := CreateVoucherDefinition(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &CreateVoucherDefinitionParams{

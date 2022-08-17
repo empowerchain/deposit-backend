@@ -50,11 +50,13 @@ func TestMakeDeposit(t *testing.T) {
 	require.NoError(t, admin.InsertTestData(context.Background()))
 	testutils.ClearAllDBs()
 
-	organizationPubKey, _ := testutils.GenerateKeys()
+	orgSigningKey, _ := testutils.GenerateKeys()
+	orgEncryptionPubKey, _ := testutils.GenerateKeys()
 	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
-		ID:     testOrganizationId,
-		Name:   testOrganizationId,
-		PubKey: organizationPubKey,
+		ID:               testOrganizationId,
+		Name:             testOrganizationId,
+		SigningPubKey:    orgSigningKey,
+		EncryptionPubKey: orgEncryptionPubKey,
 	})
 	require.NoError(t, err)
 
@@ -77,7 +79,7 @@ func TestMakeDeposit(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(organizationPubKey), &scheme.AddCollectionPointParams{
+	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(orgSigningKey), &scheme.AddCollectionPointParams{
 		SchemeID:              testScheme.ID,
 		CollectionPointPubKey: collectionPointPubKey,
 	})
@@ -217,11 +219,13 @@ func TestMakeDepositWithSameExternalRef(t *testing.T) {
 	require.NoError(t, admin.InsertTestData(context.Background()))
 	testutils.ClearAllDBs()
 
-	organizationPubKey, _ := testutils.GenerateKeys()
+	orgSigningKey, _ := testutils.GenerateKeys()
+	orgEncryptionPubKey, _ := testutils.GenerateKeys()
 	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
-		ID:     testOrganizationId,
-		Name:   testOrganizationId,
-		PubKey: organizationPubKey,
+		ID:               testOrganizationId,
+		Name:             testOrganizationId,
+		SigningPubKey:    orgSigningKey,
+		EncryptionPubKey: orgEncryptionPubKey,
 	})
 	require.NoError(t, err)
 
@@ -244,7 +248,7 @@ func TestMakeDepositWithSameExternalRef(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(organizationPubKey), &scheme.AddCollectionPointParams{
+	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(orgSigningKey), &scheme.AddCollectionPointParams{
 		SchemeID:              testScheme.ID,
 		CollectionPointPubKey: collectionPointPubKey,
 	})
@@ -297,11 +301,13 @@ func TestGetDeposit(t *testing.T) {
 	require.NoError(t, admin.InsertTestData(context.Background()))
 	testutils.ClearAllDBs()
 
-	organizationPubKey, _ := testutils.GenerateKeys()
+	orgSigningKey, _ := testutils.GenerateKeys()
+	orgEncryptionPubKey, _ := testutils.GenerateKeys()
 	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
-		ID:     testOrganizationId,
-		Name:   testOrganizationId,
-		PubKey: organizationPubKey,
+		ID:               testOrganizationId,
+		Name:             testOrganizationId,
+		SigningPubKey:    orgSigningKey,
+		EncryptionPubKey: orgEncryptionPubKey,
 	})
 	require.NoError(t, err)
 
@@ -323,7 +329,7 @@ func TestGetDeposit(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(organizationPubKey), &scheme.AddCollectionPointParams{
+	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(orgSigningKey), &scheme.AddCollectionPointParams{
 		SchemeID:              testScheme.ID,
 		CollectionPointPubKey: collectionPointPubKey,
 	})

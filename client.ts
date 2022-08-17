@@ -141,6 +141,18 @@ export namespace deposit {
         pictureURL: string
     }
 
+    export interface Event {
+        eventType: string
+        eventTime: string
+        unitName: string
+        numberOfUnits: number
+    }
+
+    export interface GetAllDepositsParams {
+        userPubKey: string
+        desc: boolean
+    }
+
     export interface GetAllDepositsResponse {
         deposits: Deposit[]
     }
@@ -164,6 +176,14 @@ export namespace deposit {
 
     export interface GetDepositParams {
         depositID: string
+    }
+
+    export interface GetHistoryParams {
+        userPubKey: string
+    }
+
+    export interface GetHistoryResponse {
+        events: Event[]
     }
 
     export interface GetVoucherDefinitionParams {
@@ -198,6 +218,7 @@ export namespace deposit {
         voucherDefinitionID: string
         ownerPubKey: string
         invalidated: boolean
+        createdAt: string
     }
 
     export interface VoucherDefinition {
@@ -234,13 +255,16 @@ export namespace deposit {
             return await resp.json() as VoucherDefinition
         }
 
+        /**
+         * TODO: TEST AUTH
+         */
         public async EditVoucherDefinition(params: EditVoucherDefinitionParams): Promise<void> {
             await this.baseClient.callAPI("POST", `/deposit.EditVoucherDefinition`, JSON.stringify(params))
         }
 
-        public async GetAllDeposits(): Promise<GetAllDepositsResponse> {
+        public async GetAllDeposits(params: GetAllDepositsParams): Promise<GetAllDepositsResponse> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callAPI("POST", `/deposit.GetAllDeposits`)
+            const resp = await this.baseClient.callAPI("POST", `/deposit.GetAllDeposits`, JSON.stringify(params))
             return await resp.json() as GetAllDepositsResponse
         }
 
@@ -269,6 +293,15 @@ export namespace deposit {
             // Now make the actual call to the API
             const resp = await this.baseClient.callAPI("POST", `/deposit.GetDepositByExternalRef`, JSON.stringify(params))
             return await resp.json() as Deposit
+        }
+
+        /**
+         * TODO: TEST THIS
+         */
+        public async GetHistory(params: GetHistoryParams): Promise<GetHistoryResponse> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callAPI("POST", `/deposit.GetHistory`, JSON.stringify(params))
+            return await resp.json() as GetHistoryResponse
         }
 
         public async GetVoucher(params: GetVoucherParams): Promise<VoucherResponse> {
@@ -305,7 +338,8 @@ export namespace organization {
     export interface CreateOrgParams {
         id: string
         name: string
-        pubKey: string
+        signingPubKey: string
+        encryptionPubKey: string
     }
 
     export interface GetAllOrganizationsResponse {
@@ -319,7 +353,8 @@ export namespace organization {
     export interface Organization {
         id: string
         name: string
-        pubKey: string
+        signingPubKey: string
+        encryptionPubKey: string
     }
 
     export class ServiceClient {

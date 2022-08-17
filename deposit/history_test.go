@@ -19,11 +19,13 @@ func TestHistory(t *testing.T) {
 	user2, _ := testutils.GenerateKeys()
 	user3, _ := testutils.GenerateKeys()
 
-	organizationPubKey, _ := testutils.GenerateKeys()
+	orgSigningPubKey, _ := testutils.GenerateKeys()
+	orgEncryptionPubKey, _ := testutils.GenerateKeys()
 	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
-		ID:     testOrganizationId,
-		Name:   testOrganizationId,
-		PubKey: organizationPubKey,
+		ID:               testOrganizationId,
+		Name:             testOrganizationId,
+		SigningPubKey:    orgSigningPubKey,
+		EncryptionPubKey: orgEncryptionPubKey,
 	})
 	require.NoError(t, err)
 
@@ -45,7 +47,7 @@ func TestHistory(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(organizationPubKey), &scheme.AddCollectionPointParams{
+	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(orgSigningPubKey), &scheme.AddCollectionPointParams{
 		SchemeID:              testScheme.ID,
 		CollectionPointPubKey: collectionPointPubKey,
 	})

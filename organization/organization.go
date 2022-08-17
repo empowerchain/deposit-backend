@@ -12,15 +12,17 @@ import (
 )
 
 type Organization struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	PubKey string `json:"pubKey"`
+	ID               string `json:"id"`
+	Name             string `json:"name"`
+	SigningPubKey    string `json:"signingPubKey"`
+	EncryptionPubKey string `json:"encryptionPubKey"`
 }
 
 type CreateOrgParams struct {
-	ID     string `json:"id" validate:"required"`
-	Name   string `json:"name" validate:"required"`
-	PubKey string `json:"pubKey" validate:"required"`
+	ID               string `json:"id" validate:"required"`
+	Name             string `json:"name" validate:"required"`
+	SigningPubKey    string `json:"signingPubKey" validate:"required"`
+	EncryptionPubKey string `json:"encryptionPubKey" validate:"required"`
 }
 
 //encore:api auth method=POST
@@ -39,9 +41,9 @@ func CreateOrganization(ctx context.Context, params *CreateOrgParams) (*Organiza
 	}
 
 	_, err = sqldb.Exec(ctx, `
-        INSERT INTO organization (id, name, pub_key)
-        VALUES ($1, $2, $3);
-    `, params.ID, params.Name, params.PubKey)
+        INSERT INTO organization (id, name, signing_pub_key, encryption_pub_key)
+        VALUES ($1, $2, $3, $4);
+    `, params.ID, params.Name, params.SigningPubKey, params.EncryptionPubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +58,7 @@ type GetOrganizationParams struct {
 //encore:api public method=POST
 func GetOrganization(ctx context.Context, params *GetOrganizationParams) (*Organization, error) {
 	var o Organization
-	if err := sqldb.QueryRow(ctx, "SELECT id, name, pub_key FROM organization WHERE id=$1", params.ID).Scan(&o.ID, &o.Name, &o.PubKey); err != nil {
+	if err := sqldb.QueryRow(ctx, "SELECT id, name, signing_pub_key, encryption_pub_key FROM organization WHERE id=$1", params.ID).Scan(&o.ID, &o.Name, &o.SigningPubKey, &o.EncryptionPubKey); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, &errs.Error{
 				Code: errs.NotFound,
@@ -84,7 +86,7 @@ func AuthorizeCallerForOrg(ctx context.Context, params *AuthorizeCallerForOrgPar
 	}
 	caller, _ := auth.UserID()
 
-	if string(caller) == org.PubKey {
+	if string(caller) == org.SigningPubKey {
 		return nil
 	}
 
@@ -109,7 +111,7 @@ type GetAllOrganizationsResponse struct {
 func GetAllOrganizations(_ context.Context) (*GetAllOrganizationsResponse, error) {
 	resp := &GetAllOrganizationsResponse{}
 	rows, err := sqldb.Query(context.Background(), `
-        SELECT id, name, pub_key FROM organization
+        SELECT id, name, signing_pub_key, encryption_pub_key FROM organization
     `)
 	if err != nil {
 		return nil, err
@@ -118,7 +120,7 @@ func GetAllOrganizations(_ context.Context) (*GetAllOrganizationsResponse, error
 
 	for rows.Next() {
 		var o Organization
-		if err := rows.Scan(&o.ID, &o.Name, &o.PubKey); err != nil {
+		if err := rows.Scan(&o.ID, &o.Name, &o.SigningPubKey, &o.EncryptionPubKey); err != nil {
 			return nil, err
 		}
 		resp.Organizations = append(resp.Organizations, o)

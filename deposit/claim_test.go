@@ -19,11 +19,13 @@ func TestClaim(t *testing.T) {
 	userPubKey, _ := testutils.GenerateKeys()
 	notUserPubKey, _ := testutils.GenerateKeys()
 
-	organizationPubKey, _ := testutils.GenerateKeys()
+	orgSigningKey, _ := testutils.GenerateKeys()
+	orgEncryptionPubKey, _ := testutils.GenerateKeys()
 	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
-		ID:     testOrganizationId,
-		Name:   testOrganizationId,
-		PubKey: organizationPubKey,
+		ID:               testOrganizationId,
+		Name:             testOrganizationId,
+		SigningPubKey:    orgSigningKey,
+		EncryptionPubKey: orgEncryptionPubKey,
 	})
 	require.NoError(t, err)
 
@@ -46,7 +48,7 @@ func TestClaim(t *testing.T) {
 
 	require.NoError(t, err)
 
-	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(organizationPubKey), &scheme.AddCollectionPointParams{
+	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(orgSigningKey), &scheme.AddCollectionPointParams{
 		SchemeID:              testScheme.ID,
 		CollectionPointPubKey: collectionPointPubKey,
 	})
@@ -151,11 +153,13 @@ func TestDoubleClaim(t *testing.T) {
 
 	userPubKey, _ := testutils.GenerateKeys()
 
-	organizationPubKey, _ := testutils.GenerateKeys()
+	orgSigningKey, _ := testutils.GenerateKeys()
+	orgEncryptionPubKey, _ := testutils.GenerateKeys()
 	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
-		ID:     testOrganizationId,
-		Name:   testOrganizationId,
-		PubKey: organizationPubKey,
+		ID:               testOrganizationId,
+		Name:             testOrganizationId,
+		SigningPubKey:    orgSigningKey,
+		EncryptionPubKey: orgEncryptionPubKey,
 	})
 	require.NoError(t, err)
 
@@ -177,7 +181,7 @@ func TestDoubleClaim(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(organizationPubKey), &scheme.AddCollectionPointParams{
+	err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(orgSigningKey), &scheme.AddCollectionPointParams{
 		SchemeID:              testScheme.ID,
 		CollectionPointPubKey: collectionPointPubKey,
 	})

@@ -33,12 +33,14 @@ func TestCreateScheme(t *testing.T) {
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))
 
-	organizationPubKey, _ := testutils.GenerateKeys()
+	orgSigningPubKey, _ := testutils.GenerateKeys()
 	notOrganizationPubKey, _ := testutils.GenerateKeys()
+	orgEncryptionPubKey, _ := testutils.GenerateKeys()
 	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
-		ID:     testOrganizationId,
-		Name:   testOrganizationId,
-		PubKey: organizationPubKey,
+		ID:               testOrganizationId,
+		Name:             testOrganizationId,
+		SigningPubKey:    orgSigningPubKey,
+		EncryptionPubKey: orgEncryptionPubKey,
 	})
 	require.NoError(t, err)
 
@@ -56,7 +58,7 @@ func TestCreateScheme(t *testing.T) {
 				RewardDefinitions: defaultTestRewards,
 			},
 			errorCode: errs.OK,
-			uid:       organizationPubKey,
+			uid:       orgSigningPubKey,
 		},
 		{
 			name: "Invalid: empty name",
@@ -66,7 +68,7 @@ func TestCreateScheme(t *testing.T) {
 				RewardDefinitions: defaultTestRewards,
 			},
 			errorCode: errs.InvalidArgument,
-			uid:       organizationPubKey,
+			uid:       orgSigningPubKey,
 		},
 		// TODO: TEST MORE PARAMS
 		{
@@ -77,7 +79,7 @@ func TestCreateScheme(t *testing.T) {
 				RewardDefinitions: defaultTestRewards,
 			},
 			errorCode: errs.NotFound,
-			uid:       organizationPubKey,
+			uid:       orgSigningPubKey,
 		},
 		{
 			name: "Not done by organization",
@@ -138,12 +140,14 @@ func TestAddCollectionPoint(t *testing.T) {
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))
 
-	organizationPubKey, _ := testutils.GenerateKeys()
+	orgSigningPubKey, _ := testutils.GenerateKeys()
 	notOrganizationPubKey, _ := testutils.GenerateKeys()
+	orgEncryptionPubKey, _ := testutils.GenerateKeys()
 	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
-		ID:     testOrganizationId,
-		Name:   testOrganizationId,
-		PubKey: organizationPubKey,
+		ID:               testOrganizationId,
+		Name:             testOrganizationId,
+		SigningPubKey:    orgSigningPubKey,
+		EncryptionPubKey: orgEncryptionPubKey,
 	})
 	require.NoError(t, err)
 
@@ -157,7 +161,7 @@ func TestAddCollectionPoint(t *testing.T) {
 			name:        "Happy Path",
 			useSchemeID: true,
 			errorCode:   errs.OK,
-			uid:         organizationPubKey,
+			uid:         orgSigningPubKey,
 		},
 		{
 			name:        "Unauthorized",
@@ -175,7 +179,7 @@ func TestAddCollectionPoint(t *testing.T) {
 			name:        "Not found",
 			useSchemeID: false,
 			errorCode:   errs.NotFound,
-			uid:         organizationPubKey,
+			uid:         orgSigningPubKey,
 		},
 	}
 
@@ -183,7 +187,7 @@ func TestAddCollectionPoint(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			require.NoError(t, testutils.ClearDB(schemeDB, "scheme"))
 
-			scheme, err := CreateScheme(testutils.GetAuthenticatedContext(organizationPubKey), &CreateSchemeParams{
+			scheme, err := CreateScheme(testutils.GetAuthenticatedContext(orgSigningPubKey), &CreateSchemeParams{
 				Name:              "SchemeName",
 				OrganizationID:    testOrganizationId,
 				RewardDefinitions: defaultTestRewards,
@@ -224,15 +228,17 @@ func TestEditScheme(t *testing.T) {
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))
 
-	organizationPubKey, _ := testutils.GenerateKeys()
+	orgSigningPubKey, _ := testutils.GenerateKeys()
+	orgEncryptionPubKey, _ := testutils.GenerateKeys()
 	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
-		ID:     testOrganizationId,
-		Name:   testOrganizationId,
-		PubKey: organizationPubKey,
+		ID:               testOrganizationId,
+		Name:             testOrganizationId,
+		SigningPubKey:    orgSigningPubKey,
+		EncryptionPubKey: orgEncryptionPubKey,
 	})
 	require.NoError(t, err)
 
-	scheme, err := CreateScheme(testutils.GetAuthenticatedContext(organizationPubKey), &CreateSchemeParams{
+	scheme, err := CreateScheme(testutils.GetAuthenticatedContext(orgSigningPubKey), &CreateSchemeParams{
 		Name:              "SchemeName",
 		OrganizationID:    testOrganizationId,
 		RewardDefinitions: defaultTestRewards,
@@ -251,7 +257,7 @@ func TestEditScheme(t *testing.T) {
 
 	collectionPoint1, _ := testutils.GenerateKeys()
 	collectionPoint2, _ := testutils.GenerateKeys()
-	err = EditScheme(testutils.GetAuthenticatedContext(organizationPubKey), &EditSchemeParams{
+	err = EditScheme(testutils.GetAuthenticatedContext(orgSigningPubKey), &EditSchemeParams{
 		SchemeID: scheme.ID,
 		RewardDefinitions: []commons.RewardDefinition{
 			newRewardDef,

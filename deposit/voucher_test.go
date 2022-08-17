@@ -16,11 +16,13 @@ func TestGetAllVouchers(t *testing.T) {
 
 	numberOfVouchers := 3
 
-	organizationPubKey, _ := testutils.GenerateKeys()
+	orgSigningPubKey, _ := testutils.GenerateKeys()
+	orgEncryptionPubKey, _ := testutils.GenerateKeys()
 	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
-		ID:     testOrganizationId,
-		Name:   testOrganizationId,
-		PubKey: organizationPubKey,
+		ID:               testOrganizationId,
+		Name:             testOrganizationId,
+		SigningPubKey:    orgSigningPubKey,
+		EncryptionPubKey: orgEncryptionPubKey,
 	})
 	require.NoError(t, err)
 
@@ -60,11 +62,13 @@ func TestGetAllVouchersForUser(t *testing.T) {
 	otherUserPubKey, _ := testutils.GenerateKeys()
 	numberOfVouchersForOtherUser := 7
 
-	organizationPubKey, _ := testutils.GenerateKeys()
+	orgSigningPubKey, _ := testutils.GenerateKeys()
+	orgEncryptionPubKey, _ := testutils.GenerateKeys()
 	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
-		ID:     testOrganizationId,
-		Name:   testOrganizationId,
-		PubKey: organizationPubKey,
+		ID:               testOrganizationId,
+		Name:             testOrganizationId,
+		SigningPubKey:    orgSigningPubKey,
+		EncryptionPubKey: orgEncryptionPubKey,
 	})
 	require.NoError(t, err)
 
@@ -122,11 +126,13 @@ func TestInvalidateVoucher(t *testing.T) {
 	ownerPubKey, _ := testutils.GenerateKeys()
 	otherUser, _ := testutils.GenerateKeys()
 
-	organizationPubKey, _ := testutils.GenerateKeys()
+	orgSigningPubKey, _ := testutils.GenerateKeys()
+	orgEncryptionPubKey, _ := testutils.GenerateKeys()
 	_, err := organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
-		ID:     testOrganizationId,
-		Name:   testOrganizationId,
-		PubKey: organizationPubKey,
+		ID:               testOrganizationId,
+		Name:             testOrganizationId,
+		SigningPubKey:    orgSigningPubKey,
+		EncryptionPubKey: orgEncryptionPubKey,
 	})
 	require.NoError(t, err)
 
