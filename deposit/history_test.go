@@ -96,22 +96,22 @@ func TestHistory(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 2, len(user1History.Events))
 	// user1Deposit2 first because newest first
-	require.Equal(t, user1Deposit2.MassBalanceDeposits[0].Amount, user1History.Events[0].NumberOfUnits)
+	require.Equal(t, user1Deposit2.MassBalanceDeposits[0].Amount, user1History.Events[0].NumberOfUnitsIn)
 	require.Equal(t, EventTypeDeposit, user1History.Events[0].EventType)
-	require.Equal(t, "Voucher", user1History.Events[0].UnitName)
+	require.Equal(t, "Voucher", user1History.Events[0].UnitNameIn)
 
-	require.Equal(t, user1Deposit1.MassBalanceDeposits[0].Amount, user1History.Events[1].NumberOfUnits)
+	require.Equal(t, user1Deposit1.MassBalanceDeposits[0].Amount, user1History.Events[1].NumberOfUnitsIn)
 	require.Equal(t, EventTypeDeposit, user1History.Events[1].EventType)
-	require.Equal(t, "Voucher", user1History.Events[1].UnitName)
+	require.Equal(t, "Voucher", user1History.Events[1].UnitNameIn)
 
 	user2History, err := GetHistory(ctx, &GetHistoryParams{
 		UserPubKey: user2,
 	})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(user2History.Events))
-	require.Equal(t, user2Deposit1.MassBalanceDeposits[0].Amount, user2History.Events[0].NumberOfUnits)
+	require.Equal(t, user2Deposit1.MassBalanceDeposits[0].Amount, user2History.Events[0].NumberOfUnitsIn)
 	require.Equal(t, EventTypeDeposit, user2History.Events[0].EventType)
-	require.Equal(t, "Voucher", user2History.Events[0].UnitName)
+	require.Equal(t, "Voucher", user2History.Events[0].UnitNameIn)
 
 	user3History, err := GetHistory(ctx, &GetHistoryParams{
 		UserPubKey: user3,

@@ -90,17 +90,9 @@ func authorizeCallerToClaim(ctx context.Context, userPubKey string, deposit *Dep
 }
 
 func payOutRewards(ctx context.Context, tx *sqldb.Tx, deposit *Deposit) ([]commons.Reward, error) {
-	var rewards []commons.Reward
-	s, err := scheme.GetScheme(ctx, &scheme.GetSchemeParams{SchemeID: deposit.SchemeID})
+	rewards, err := getRewards(ctx, deposit)
 	if err != nil {
 		return nil, err
-	}
-	for _, rd := range s.RewardDefinitions {
-		for _, depItem := range deposit.MassBalanceDeposits {
-			if rd.ItemDefinition.SameAs(depItem.ItemDefinition) {
-				rewards = append(rewards, rd.GetRewardsFor(depItem))
-			}
-		}
 	}
 
 	for _, r := range rewards {
@@ -113,6 +105,23 @@ func payOutRewards(ctx context.Context, tx *sqldb.Tx, deposit *Deposit) ([]commo
 			panic("NOT SUPPORTED YET")
 		default:
 			panic("Reward type not found!")
+		}
+	}
+
+	return rewards, nil
+}
+
+func getRewards(ctx context.Context, deposit *Deposit) ([]commons.Reward, error) {
+	var rewards []commons.Reward
+	s, err := scheme.GetScheme(ctx, &scheme.GetSchemeParams{SchemeID: deposit.SchemeID})
+	if err != nil {
+		return nil, err
+	}
+	for _, rd := range s.RewardDefinitions {
+		for _, depItem := range deposit.MassBalanceDeposits {
+			if rd.ItemDefinition.SameAs(depItem.ItemDefinition) {
+				rewards = append(rewards, rd.GetRewardsFor(depItem))
+			}
 		}
 	}
 
