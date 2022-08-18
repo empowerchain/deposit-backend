@@ -40,7 +40,7 @@ func ClearAllDBs() {
 	if err := ClearDB(orgDB, "organization"); err != nil {
 		panic(err)
 	}
-	if err := ClearDB(depositDB, "deposit", "voucher", "voucher_definition"); err != nil {
+	if err := ClearDB(depositDB, "deposit", "voucher", "voucher_definition", "token_definition"); err != nil {
 		panic(err)
 	}
 	if err := ClearDB(schemeDB, "scheme"); err != nil {
