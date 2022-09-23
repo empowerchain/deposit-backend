@@ -5,6 +5,8 @@ import (
 
 	"encore.app/commons"
 	"encore.app/deposit"
+	"encore.app/organization"
+	"encore.app/scheme"
 	"encore.dev/beta/errs"
 	"golang.org/x/exp/maps"
 )
@@ -86,6 +88,43 @@ func GetStats(ctx context.Context, params *User) (*Stats, error) {
 	}
 
 	resp.DepositAmounts = materials
+
+	return resp, nil
+}
+
+type OrganizationData struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type Organizations struct {
+	Organizations []OrganizationData `json:"organizations"`
+}
+
+//encore:api public method=POST
+func GetOrganizationsByUser(ctx context.Context, params *User) (*Organizations, error) {
+	if err := commons.Validate(params); err != nil || params.PubKey == "" {
+		return nil, &errs.Error{
+			Code: errs.InvalidArgument,
+		}
+	}
+
+	var resp = &Organizations{}
+
+	allDeposits, _ := deposit.GetAllDeposits(ctx, &deposit.GetAllDepositsParams{UserPubKey: params.PubKey})
+
+	var registeredOrganizations = make(map[string]string)
+
+	for _, deposit := range allDeposits.Deposits {
+		depositData, _ := scheme.GetScheme(ctx, &scheme.GetSchemeParams{SchemeID: deposit.SchemeID})
+		organizationId := depositData.OrganizationID
+		if _, organizationRegistered := registeredOrganizations[organizationId]; !organizationRegistered {
+			organizationName, _ := organization.GetOrganization(ctx, &organization.GetOrganizationParams{ID: organizationId})
+			registeredOrganizations[organizationId] = organizationName.Name // Updating map
+			var currentOrganization = OrganizationData{Name: organizationName.Name, ID: organizationId}
+			resp.Organizations = append(resp.Organizations, currentOrganization)
+		}
+	}
 
 	return resp, nil
 }
