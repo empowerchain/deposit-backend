@@ -224,6 +224,8 @@ func TestGetOrganizationsByUser(t *testing.T) {
 	// User empty data
 	require.Equal(t, 0, len(userOrganizations.Organizations))
 
+	existingOrganizations := make(map[string]OrganizationData)
+
 	for idx := 0; idx < 10; idx++ {
 		// pubkeys
 		tempOrgSigningPubKey, _ := testutils.GenerateKeys()
@@ -233,55 +235,60 @@ func TestGetOrganizationsByUser(t *testing.T) {
 		// New org
 		_, err = organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
 			ID:               tempOrganizationId,
-			Name:             tempOrganizationId,
+			Name:             tempOrganizationId + "name",
 			SigningPubKey:    tempOrgSigningPubKey,
 			EncryptionPubKey: tempOrgEncryptionPubKey,
 		})
 		require.NoError(t, err)
 
-		// Voucher for new org
-		definition, err := deposit.CreateVoucherDefinition(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &deposit.CreateVoucherDefinitionParams{
-			OrganizationID: tempOrganizationId,
-			Name:           "Voucher def" + strconv.Itoa(idx),
-			PictureURL:     "https://does.not.matter.com",
-		})
-		require.NoError(t, err)
+		// Register new organization
+		existingOrganizations[tempOrganizationId] = OrganizationData{ID: tempOrganizationId, Name: tempOrganizationId}
 
-		defaultTestRewardsMagnitude1.RewardTypeID = definition.ID
+		for jdx := 0; jdx < 2; jdx++ {
+			// Voucher for new org
+			definition, err := deposit.CreateVoucherDefinition(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &deposit.CreateVoucherDefinitionParams{
+				OrganizationID: tempOrganizationId,
+				Name:           "Voucher def" + strconv.Itoa(idx) + strconv.Itoa(jdx),
+				PictureURL:     "https://does.not.matter.com",
+			})
+			require.NoError(t, err)
 
-		collectionPointPubKey, _ := testutils.GenerateKeys()
-		// Adds scheme
-		testScheme, err := scheme.CreateScheme(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &scheme.CreateSchemeParams{
-			Name: "TestScheme",
-			RewardDefinitions: []commons.RewardDefinition{
-				defaultTestRewardsMagnitude1,
-			},
-			OrganizationID: tempOrganizationId,
-		})
-		require.NoError(t, err)
+			defaultTestRewardsMagnitude1.RewardTypeID = definition.ID
 
-		// Add Collection point
-		err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(tempOrgSigningPubKey), &scheme.AddCollectionPointParams{
-			SchemeID:              testScheme.ID,
-			CollectionPointPubKey: collectionPointPubKey,
-		})
-		require.NoError(t, err)
-
-		// Just Context
-		contextDeposit := testutils.GetAuthenticatedContext(collectionPointPubKey)
-
-		// First Deposit made
-		deposit.MakeDeposit(contextDeposit, &deposit.MakeDepositParams{
-			SchemeID:   testScheme.ID,
-			UserPubKey: user1,
-			MassBalanceDeposits: []commons.MassBalance{
-				{
-					ItemDefinition: defaultTestRewardsMagnitude1.ItemDefinition,
-					Amount:         float64(idx),
+			collectionPointPubKey, _ := testutils.GenerateKeys()
+			// Adds scheme
+			testScheme, err := scheme.CreateScheme(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &scheme.CreateSchemeParams{
+				Name: "TestScheme",
+				RewardDefinitions: []commons.RewardDefinition{
+					defaultTestRewardsMagnitude1,
 				},
-			},
-		})
-		require.NoError(t, err)
+				OrganizationID: tempOrganizationId,
+			})
+			require.NoError(t, err)
+
+			// Add Collection point
+			err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(tempOrgSigningPubKey), &scheme.AddCollectionPointParams{
+				SchemeID:              testScheme.ID,
+				CollectionPointPubKey: collectionPointPubKey,
+			})
+			require.NoError(t, err)
+
+			// Just Context
+			contextDeposit := testutils.GetAuthenticatedContext(collectionPointPubKey)
+
+			// First Deposit made
+			deposit.MakeDeposit(contextDeposit, &deposit.MakeDepositParams{
+				SchemeID:   testScheme.ID,
+				UserPubKey: user1,
+				MassBalanceDeposits: []commons.MassBalance{
+					{
+						ItemDefinition: defaultTestRewardsMagnitude1.ItemDefinition,
+						Amount:         float64(idx + jdx),
+					},
+				},
+			})
+			require.NoError(t, err)
+		}
 
 		userOrganizations, err = GetOrganizationsByUser(context, &User{
 			PubKey: user1,
@@ -290,6 +297,12 @@ func TestGetOrganizationsByUser(t *testing.T) {
 		var counterOfOrganizations = idx + 1
 		// User empty data
 		require.Equal(t, int(counterOfOrganizations), len(userOrganizations.Organizations))
+		for _, currentOrganization := range userOrganizations.Organizations {
+			// Verify names are different from ID
+			require.Equal(t, currentOrganization.ID+"name", currentOrganization.Name)
+			// If the id of the organization is repeated, it will crash here. Otherwise the id is deleted when checked
+			delete(existingOrganizations, currentOrganization.ID)
+		}
 	}
 
 	userOrganizations, err = GetOrganizationsByUser(context, &User{
