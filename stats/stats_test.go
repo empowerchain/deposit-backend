@@ -222,7 +222,7 @@ func TestGetOrganizationsByUser(t *testing.T) {
 	})
 
 	// User empty data
-	require.Equal(t, 0, len(userOrganizations.Organizations))
+	require.Equal(t, 0, len(userOrganizations.DepositOrgsForUser))
 
 	existingOrganizations := make(map[string]OrganizationData)
 
@@ -296,8 +296,8 @@ func TestGetOrganizationsByUser(t *testing.T) {
 
 		var counterOfOrganizations = idx + 1
 		// User empty data
-		require.Equal(t, int(counterOfOrganizations), len(userOrganizations.Organizations))
-		for _, currentOrganization := range userOrganizations.Organizations {
+		require.Equal(t, int(counterOfOrganizations), len(userOrganizations.DepositOrgsForUser))
+		for _, currentOrganization := range userOrganizations.DepositOrgsForUser {
 			// Verify names are different from ID
 			require.Equal(t, currentOrganization.ID+"name", currentOrganization.Name)
 			// If the id of the organization is repeated, it will crash here. Otherwise the id is deleted when checked
@@ -309,6 +309,6 @@ func TestGetOrganizationsByUser(t *testing.T) {
 		PubKey: user2,
 	})
 
-	require.Equal(t, int(0), len(userOrganizations.Organizations))
+	require.Equal(t, int(0), len(userOrganizations.DepositOrgsForUser))
 
 }

@@ -93,12 +93,12 @@ func GetStats(ctx context.Context, params *User) (*Stats, error) {
 }
 
 type OrganizationData struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID   string `json:"organizationId"`
+	Name string `json:"organizationName"`
 }
 
 type Organizations struct {
-	Organizations []OrganizationData `json:"organizations"`
+	DepositOrgsForUser []OrganizationData `json:"depositOrgsForUser"`
 }
 
 //encore:api public method=POST
@@ -109,7 +109,7 @@ func GetOrganizationsByUser(ctx context.Context, params *User) (*Organizations, 
 		}
 	}
 
-	var resp = &Organizations{Organizations: []OrganizationData{}}
+	var resp = &Organizations{DepositOrgsForUser: []OrganizationData{}}
 
 	allDeposits, _ := deposit.GetAllDeposits(ctx, &deposit.GetAllDepositsParams{UserPubKey: params.PubKey})
 
@@ -122,7 +122,7 @@ func GetOrganizationsByUser(ctx context.Context, params *User) (*Organizations, 
 			organizationName, _ := organization.GetOrganization(ctx, &organization.GetOrganizationParams{ID: organizationId})
 			registeredOrganizations[organizationId] = organizationName.Name // Updating map
 			var currentOrganization = OrganizationData{Name: organizationName.Name, ID: organizationId}
-			resp.Organizations = append(resp.Organizations, currentOrganization)
+			resp.DepositOrgsForUser = append(resp.DepositOrgsForUser, currentOrganization)
 		}
 	}
 
