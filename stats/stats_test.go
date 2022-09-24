@@ -2,6 +2,7 @@ package stats
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
 	"encore.app/admin"
@@ -203,5 +204,98 @@ func TestGetStats(t *testing.T) {
 		require.Equal(t, 2, len(userStatsUsingVouchers.DepositAmounts))
 		require.Equal(t, numberOfVouchersUsed, userStatsUsingVouchers.NumberOfUsedVouchers) // this doesn't change
 	}
+
+}
+
+func TestGetOrganizationsByUser(t *testing.T) {
+
+	require.NoError(t, admin.InsertTestData(context.Background()))
+	testutils.ClearAllDBs()
+
+	user1, _ := testutils.GenerateKeys()
+	user2, _ := testutils.GenerateKeys()
+
+	context := testutils.GetAuthenticatedContext(user1)
+
+	userOrganizations, err := GetOrganizationsByUser(context, &User{
+		PubKey: user1,
+	})
+
+	// User empty data
+	require.Equal(t, 0, len(userOrganizations.Organizations))
+
+	for idx := 0; idx < 10; idx++ {
+		// pubkeys
+		tempOrgSigningPubKey, _ := testutils.GenerateKeys()
+		tempOrgEncryptionPubKey, _ := testutils.GenerateKeys()
+		tempOrganizationId := "myOrgId" + strconv.Itoa(idx)
+
+		// New org
+		_, err = organization.CreateOrganization(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &organization.CreateOrgParams{
+			ID:               tempOrganizationId,
+			Name:             tempOrganizationId,
+			SigningPubKey:    tempOrgSigningPubKey,
+			EncryptionPubKey: tempOrgEncryptionPubKey,
+		})
+		require.NoError(t, err)
+
+		// Voucher for new org
+		definition, err := deposit.CreateVoucherDefinition(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &deposit.CreateVoucherDefinitionParams{
+			OrganizationID: tempOrganizationId,
+			Name:           "Voucher def" + strconv.Itoa(idx),
+			PictureURL:     "https://does.not.matter.com",
+		})
+		require.NoError(t, err)
+
+		defaultTestRewardsMagnitude1.RewardTypeID = definition.ID
+
+		collectionPointPubKey, _ := testutils.GenerateKeys()
+		// Adds scheme
+		testScheme, err := scheme.CreateScheme(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &scheme.CreateSchemeParams{
+			Name: "TestScheme",
+			RewardDefinitions: []commons.RewardDefinition{
+				defaultTestRewardsMagnitude1,
+			},
+			OrganizationID: tempOrganizationId,
+		})
+		require.NoError(t, err)
+
+		// Add Collection point
+		err = scheme.AddCollectionPoint(testutils.GetAuthenticatedContext(tempOrgSigningPubKey), &scheme.AddCollectionPointParams{
+			SchemeID:              testScheme.ID,
+			CollectionPointPubKey: collectionPointPubKey,
+		})
+		require.NoError(t, err)
+
+		// Just Context
+		contextDeposit := testutils.GetAuthenticatedContext(collectionPointPubKey)
+
+		// First Deposit made
+		deposit.MakeDeposit(contextDeposit, &deposit.MakeDepositParams{
+			SchemeID:   testScheme.ID,
+			UserPubKey: user1,
+			MassBalanceDeposits: []commons.MassBalance{
+				{
+					ItemDefinition: defaultTestRewardsMagnitude1.ItemDefinition,
+					Amount:         float64(idx),
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		userOrganizations, err = GetOrganizationsByUser(context, &User{
+			PubKey: user1,
+		})
+
+		var counterOfOrganizations = idx + 1
+		// User empty data
+		require.Equal(t, int(counterOfOrganizations), len(userOrganizations.Organizations))
+	}
+
+	userOrganizations, err = GetOrganizationsByUser(context, &User{
+		PubKey: user2,
+	})
+
+	require.Equal(t, int(0), len(userOrganizations.Organizations))
 
 }
