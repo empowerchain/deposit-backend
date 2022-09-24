@@ -109,7 +109,7 @@ func GetOrganizationsByUser(ctx context.Context, params *User) (*Organizations, 
 		}
 	}
 
-	var resp = &Organizations{}
+	var resp = &Organizations{Organizations: []OrganizationData{}}
 
 	allDeposits, _ := deposit.GetAllDeposits(ctx, &deposit.GetAllDepositsParams{UserPubKey: params.PubKey})
 
