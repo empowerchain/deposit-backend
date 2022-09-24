@@ -3,13 +3,14 @@ package deposit
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"time"
+
 	"encore.app/admin"
 	"encore.app/commons"
 	"encore.dev/beta/auth"
 	"encore.dev/beta/errs"
 	"encore.dev/storage/sqldb"
-	"errors"
-	"time"
 )
 
 type Voucher struct {
@@ -69,18 +70,33 @@ func GetVoucher(ctx context.Context, params *GetVoucherParams) (*VoucherResponse
 	}, nil
 }
 
+type GetAllVouchersParams struct {
+	PubKey string `json:"pubKey"`
+}
+
 type GetAllVouchersResponse struct {
 	Vouchers []VoucherResponse `json:"vouchers"`
 }
 
 //encore:api public method=POST
-func GetAllVouchers(ctx context.Context) (*GetAllVouchersResponse, error) {
+func GetAllVouchers(ctx context.Context, params *GetAllVouchersParams) (*GetAllVouchersResponse, error) {
 	resp := &GetAllVouchersResponse{
 		Vouchers: []VoucherResponse{},
 	}
-	rows, err := sqldb.Query(ctx, `
-        SELECT id, voucher_definition_id, owner_pub_key, invalidated FROM voucher
-    `)
+
+	var rows *sqldb.Rows
+	var err error
+
+	if params.PubKey == "" {
+		rows, err = sqldb.Query(ctx, `
+			SELECT id, voucher_definition_id, owner_pub_key, invalidated FROM voucher
+		`)
+	} else {
+		rows, err = sqldb.Query(ctx, `
+			SELECT id, voucher_definition_id, owner_pub_key, invalidated FROM voucher WHERE owner_pub_key=$1
+		`, params.PubKey)
+	}
+
 	if err != nil {
 		return nil, err
 	}
