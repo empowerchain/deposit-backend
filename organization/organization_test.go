@@ -2,18 +2,20 @@ package organization
 
 import (
 	"context"
+	"strconv"
+	"testing"
+
 	"encore.app/admin"
 	"encore.app/commons/testutils"
 	"encore.dev/beta/errs"
 	"encore.dev/storage/sqldb"
 	"github.com/stretchr/testify/require"
-	"strconv"
-	"testing"
 )
 
 var organizationDB = sqldb.Named("organization")
 
 func TestCreateOrganization(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))
 	signingPubKey, _ := testutils.GenerateKeys()
@@ -85,6 +87,7 @@ func TestCreateOrganization(t *testing.T) {
 }
 
 func TestGetAllOrganizations(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	numberOfOrgs := 21
 	orgName := "My name"
 

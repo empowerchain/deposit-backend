@@ -2,6 +2,8 @@ package deposit
 
 import (
 	"context"
+	"testing"
+
 	"encore.app/admin"
 	"encore.app/commons"
 	"encore.app/commons/testutils"
@@ -9,10 +11,10 @@ import (
 	"encore.app/scheme"
 	"encore.dev/beta/errs"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestClaim(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))
 
@@ -148,6 +150,7 @@ func TestClaim(t *testing.T) {
 }
 
 func TestDoubleClaim(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))
 

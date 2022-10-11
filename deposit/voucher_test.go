@@ -12,6 +12,7 @@ import (
 )
 
 func TestGetAllVouchers(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))
 
@@ -55,6 +56,7 @@ func TestGetAllVouchers(t *testing.T) {
 }
 
 func TestGetAllVouchersForUser(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))
 
@@ -106,6 +108,7 @@ func TestGetAllVouchersForUser(t *testing.T) {
 }
 
 func TestGetVouchersForForNonExistingUser(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	testutils.ClearAllDBs()
 
 	userPubKey, _ := testutils.GenerateKeys()
@@ -121,6 +124,7 @@ func TestGetVouchersForForNonExistingUser(t *testing.T) {
 }
 
 func TestInvalidateVoucher(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))
 

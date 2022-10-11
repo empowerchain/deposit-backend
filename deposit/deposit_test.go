@@ -2,6 +2,8 @@ package deposit
 
 import (
 	"context"
+	"testing"
+
 	"encore.app/admin"
 	"encore.app/commons"
 	"encore.app/commons/testutils"
@@ -10,7 +12,6 @@ import (
 	"encore.dev/beta/errs"
 	"encore.dev/storage/sqldb"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 const (
@@ -47,6 +48,7 @@ var (
 )
 
 func TestMakeDeposit(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	require.NoError(t, admin.InsertTestData(context.Background()))
 	testutils.ClearAllDBs()
 
@@ -216,6 +218,7 @@ func TestMakeDeposit(t *testing.T) {
 }
 
 func TestMakeDepositWithSameExternalRef(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	require.NoError(t, admin.InsertTestData(context.Background()))
 	testutils.ClearAllDBs()
 
@@ -298,6 +301,7 @@ func TestMakeDepositWithSameExternalRef(t *testing.T) {
 }
 
 func TestGetDeposit(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	require.NoError(t, admin.InsertTestData(context.Background()))
 	testutils.ClearAllDBs()
 

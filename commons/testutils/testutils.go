@@ -3,10 +3,12 @@ package testutils
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
+	"testing"
+
 	_ "encore.dev/appruntime/app/appinit"
 	"encore.dev/beta/auth"
 	"encore.dev/storage/sqldb"
-	"fmt"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 )
 
@@ -15,6 +17,7 @@ const (
 )
 
 var (
+	adminDb   = sqldb.Named("admin")
 	orgDB     = sqldb.Named("organization")
 	depositDB = sqldb.Named("deposit")
 	schemeDB  = sqldb.Named("scheme")
@@ -56,4 +59,53 @@ func ClearDB(db *sqldb.Database, tables ...string) error {
 	}
 
 	return nil
+}
+
+// EnsureExclusiveDatabaseAccess ensures the test runs with exclusive access to the database.
+// No other tests that call EnsureExclusiveDatabaseAccess will have access during that time.
+func EnsureExclusiveDatabaseAccess(t *testing.T) {
+	ctx := context.Background()
+
+	adminLockTx, err := adminDb.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	orgLockTx, err := orgDB.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	depLockTx, err := depositDB.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	schemeLockTx, err := schemeDB.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() {
+		adminLockTx.Rollback()
+		orgLockTx.Rollback()
+		depLockTx.Rollback()
+		schemeLockTx.Rollback()
+	})
+
+	if _, err := adminLockTx.Exec(ctx, "SELECT pg_advisory_lock(1)"); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := orgLockTx.Exec(ctx, "SELECT pg_advisory_lock(1)"); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := depLockTx.Exec(ctx, "SELECT pg_advisory_lock(1)"); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := schemeLockTx.Exec(ctx, "SELECT pg_advisory_lock(1)"); err != nil {
+		t.Fatal(err)
+	}
 }

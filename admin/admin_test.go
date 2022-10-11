@@ -2,13 +2,16 @@ package admin
 
 import (
 	"context"
+
 	"encore.app/commons/testutils"
 
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIsAdmin(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	require.NoError(t, InsertTestData(context.Background()))
 
 	testTable := []struct {

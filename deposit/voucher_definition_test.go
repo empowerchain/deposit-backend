@@ -2,15 +2,17 @@ package deposit
 
 import (
 	"context"
+	"testing"
+
 	"encore.app/admin"
 	"encore.app/commons/testutils"
 	"encore.app/organization"
 	"encore.dev/beta/errs"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestCreateVoucherDefinition(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))
 
@@ -109,6 +111,7 @@ func TestCreateVoucherDefinition(t *testing.T) {
 }
 
 func TestGetAllVoucherDefinitions(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))
 
@@ -147,6 +150,7 @@ func TestGetAllVoucherDefinitions(t *testing.T) {
 }
 
 func TestEditVoucherDefinition(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))
 

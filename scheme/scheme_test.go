@@ -2,6 +2,8 @@ package scheme
 
 import (
 	"context"
+	"testing"
+
 	"encore.app/admin"
 	"encore.app/commons"
 	"encore.app/commons/testutils"
@@ -9,7 +11,6 @@ import (
 	"encore.dev/beta/errs"
 	"encore.dev/storage/sqldb"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 const testOrganizationId = "myOrgId1"
@@ -30,6 +31,7 @@ var (
 )
 
 func TestCreateScheme(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))
 
@@ -137,6 +139,7 @@ func TestCreateScheme(t *testing.T) {
 }
 
 func TestAddCollectionPoint(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))
 
@@ -225,6 +228,7 @@ func TestAddCollectionPoint(t *testing.T) {
 }
 
 func TestEditScheme(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	testutils.ClearAllDBs()
 	require.NoError(t, admin.InsertTestData(context.Background()))
 

@@ -49,6 +49,7 @@ var (
 )
 
 func TestGetStats(t *testing.T) {
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	require.NoError(t, admin.InsertTestData(context.Background()))
 	testutils.ClearAllDBs()
 
@@ -208,7 +209,7 @@ func TestGetStats(t *testing.T) {
 }
 
 func TestGetOrganizationsByUser(t *testing.T) {
-
+	testutils.EnsureExclusiveDatabaseAccess(t)
 	require.NoError(t, admin.InsertTestData(context.Background()))
 	testutils.ClearAllDBs()
 
