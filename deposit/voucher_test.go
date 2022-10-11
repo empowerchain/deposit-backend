@@ -2,12 +2,13 @@ package deposit
 
 import (
 	"context"
+	"testing"
+
 	"encore.app/admin"
 	"encore.app/commons/testutils"
 	"encore.app/organization"
 	"encore.dev/beta/errs"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestGetAllVouchers(t *testing.T) {
@@ -42,7 +43,7 @@ func TestGetAllVouchers(t *testing.T) {
 	}
 	require.NoError(t, tx.Commit())
 
-	allVouchers, err := GetAllVouchers(testutils.GetAuthenticatedContext(testutils.AdminPubKey))
+	allVouchers, err := GetAllVouchers(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetAllVouchersParams{})
 	require.NoError(t, err)
 	require.Equal(t, numberOfVouchers, len(allVouchers.Vouchers))
 
@@ -91,7 +92,7 @@ func TestGetAllVouchersForUser(t *testing.T) {
 	}
 	require.NoError(t, tx.Commit())
 
-	allVouchers, err := GetAllVouchers(testutils.GetAuthenticatedContext(testutils.AdminPubKey))
+	allVouchers, err := GetAllVouchers(testutils.GetAuthenticatedContext(testutils.AdminPubKey), &GetAllVouchersParams{})
 	require.NoError(t, err)
 	require.Equal(t, numberOfVouchersForUser+numberOfVouchersForOtherUser, len(allVouchers.Vouchers))
 
@@ -108,7 +109,7 @@ func TestGetVouchersForForNonExistingUser(t *testing.T) {
 	testutils.ClearAllDBs()
 
 	userPubKey, _ := testutils.GenerateKeys()
-	all, err := GetAllVouchers(testutils.GetAuthenticatedContext(userPubKey))
+	all, err := GetAllVouchers(testutils.GetAuthenticatedContext(userPubKey), &GetAllVouchersParams{})
 	require.NoError(t, err)
 	require.NotNil(t, all.Vouchers)
 	require.Equal(t, 0, len(all.Vouchers))
