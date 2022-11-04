@@ -46,7 +46,7 @@ func IsAdmin(ctx context.Context, params *IsAdminParams) (*IsAdminResponse, erro
 
 //encore:api private method=POST
 func InsertTestData(_ context.Context) error {
-	if encore.Meta().Environment.Type == encore.EnvLocal {
+    if encore.Meta().Environment.Type == encore.EnvLocal {
 		if _, err := sqldb.Exec(context.Background(), testFixtures); err != nil {
 			log.Fatalln("unable to add fixtures:", err)
 		}
